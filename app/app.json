@@ -1,0 +1,21 @@
+{
+  "expo": {
+    "name": "VocaLab",
+    "slug": "vocalab",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "newArchEnabled": true,
+    "plugins": [
+      "expo-asset",
+      "expo-font"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#ffffff"
+      }
+    }
+  }
+}

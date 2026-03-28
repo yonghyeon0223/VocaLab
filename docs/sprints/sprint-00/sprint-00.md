@@ -7,14 +7,14 @@
 
 ## 작업 목록
 
-- [ ] 폴더 구조 생성 (app / server / shared / docs)
-- [ ] TypeScript 설정 (tsconfig.json — app, server, shared 각각)
-- [ ] server 기본 세팅 (Express 앱 진입점, 환경변수 로딩)
-- [ ] MongoDB 연결 확인 (native driver로 ping 테스트)
-- [ ] shared/types.ts 뼈대 작성 (도메인 용어 타입만, 구현 없음)
-- [ ] app 기본 세팅 (Expo 초기화, 화면에 "Hello World" 출력)
-- [ ] 환경변수 파일 (.env.example 작성, .gitignore 설정)
-- [ ] GitHub 레포지토리에 초기 커밋 푸시
+- [x] 폴더 구조 생성 (app / server / shared / docs)
+- [x] TypeScript 설정 (tsconfig.json — app, server, shared 각각)
+- [x] server 기본 세팅 (Express 앱 진입점, 환경변수 로딩)
+- [x] MongoDB 연결 확인 (native driver로 ping 테스트)
+- [x] shared/types.ts 뼈대 작성 (도메인 용어 타입만, 구현 없음)
+- [x] app 기본 세팅 (Expo 초기화, 화면에 "Hello World" 출력)
+- [x] 환경변수 파일 (.env.example 작성, .gitignore 설정)
+- [x] GitHub 레포지토리에 초기 커밋 푸시
 
 ---
 
