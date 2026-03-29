@@ -10,11 +10,12 @@ vocalab/
 ├── app/
 │   └── src/
 │       ├── screens/              # 화면 단위 컴포넌트
-│       ├── components/           # 재사용 UI 컴포넌트
+│       ├── components/ui/        # 재사용 UI 컴포넌트
 │       ├── hooks/                # 커스텀 훅
 │       ├── services/             # API 호출 레이어
 │       ├── stores/               # 전역 상태 (Zustand)
 │       ├── navigation/           # React Navigation 설정
+│       ├── constants/            # 색상 등 앱 전역 상수
 │       └── utils/                # 순수 유틸 함수
 ├── server/
 │   └── src/
@@ -23,18 +24,16 @@ vocalab/
 │       ├── services/             # 비즈니스 로직
 │       ├── repositories/         # DB 접근 레이어 (MongoDB native)
 │       ├── middlewares/          # 인증, 에러 핸들링 등
-│       ├── types/                # 서버 전용 타입
-│       └── utils/
+│       ├── validators/           # Zod 스키마
+│       └── utils/                # jwt, db, env, AppError, mailer 등
 ├── shared/
 │   └── types.ts                  # 클라이언트/서버 공통 타입
 ├── docs/
 │   └── sprints/
-│       ├── sprint-00/
-│       │   ├── sprint-00.md
+│       ├── sprint-XX/
+│       │   ├── sprint-XX.md      # 스프린트 목표 및 작업 목록
 │       │   └── YYYYMMDD-HHMM-{작업명}.md
-│       └── sprint-01/
-│           ├── sprint-01.md
-│           └── YYYYMMDD-HHMM-{작업명}.md
+│       └── ...
 └── CLAUDE.md
 ```
 
@@ -56,18 +55,134 @@ vocalab/
 
 ---
 
-## 🧠 핵심 도메인 개념
+## 🧠 도메인 지식
 
-코드 전체에서 아래 용어를 일관되게 사용할 것. 임의 변경 금지.
+각 스프린트에서 확립된 도메인 개념과 규칙. 코드베이스 전체에서 일관되게 사용할 것.
+
+---
+
+### Sprint 01 — UI 시스템
+
+**컴포넌트** (`app/src/components/ui/`)
+
+| 컴포넌트 | 주요 props | 비고 |
+|---------|-----------|------|
+| `Button` | `label`, `onPress`, `disabled` | 앱 전체 버튼 단일 스타일 |
+| `TextInput` | `label`, `value`, `onChangeText`, `error`, `placeholder` | 포커스 시 border 색상 변경 |
+| `PasswordInput` | TextInput props + `showStrength` | 표시/숨김 토글, 강도 표시 옵션 |
+| `Logo` | `size: 'small' \| 'medium' \| 'large'` | 앱 로고 |
+
+**색상 팔레트** (`app/src/constants/colors.ts`)
+
+| 토큰 | 값 | 용도 |
+|-----|----|------|
+| `colors.background.primary` | `#0f0f0f` | 메인 배경 |
+| `colors.background.secondary` | `#1a1a1a` | 입력창, 카드 |
+| `colors.background.tertiary` | `#2a2a2a` | 구분선, 비활성 |
+| `colors.text.primary` | `#f5f5f5` | 주요 텍스트 |
+| `colors.text.secondary` | `#888888` | 보조 텍스트 |
+| `colors.text.disabled` | `#444444` | placeholder |
+| `colors.border.default` | `#2e2e2e` | 기본 테두리 |
+| `colors.border.focused` | `#6c63ff` | 포커스 테두리 |
+| `colors.accent` | `#6c63ff` | 버튼, 링크, 강조 |
+| `colors.error` | `#e24b4a` | 에러 상태 |
+
+---
+
+### Sprint 02 — 인증 시스템
+
+#### DB 엔티티
+
+**`User`** (`users` 컬렉션 — 이메일 인증 완료한 유저만 존재)
+```typescript
+type User = {
+  _id: ObjectId;
+  email: string;           // 소문자 정규화, 유니크 인덱스
+  password: string;        // bcrypt 해싱 (rounds: 12)
+  refreshToken: string | null; // bcrypt 해싱 저장
+  loginAttempts: number;   // 기본값 0, 20회 도달 시 잠금
+  lockedUntil: Date | null;    // 20회 실패 시 현재 + 5분
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+**`PendingVerification`** (`pendingVerifications` 컬렉션 — 인증 대기 임시 저장)
+```typescript
+type PendingVerification = {
+  _id: ObjectId;
+  email: string;       // 유니크 인덱스
+  hashedCode: string;  // bcrypt 해싱된 6자리 코드
+  expiresAt: Date;     // 발급 후 10분
+  attempts: number;    // 기본값 0, 5회 초과 시 만료 처리
+  createdAt: Date;     // TTL 인덱스 — 24시간 후 자동 삭제
+}
+```
+
+#### 인증 규칙
+
+- `register` 요청에는 **이메일만** 포함한다. 비밀번호는 `verifyEmail` 시점에 처음 서버로 전달된다.
+- 이메일은 항상 **소문자로 정규화** 후 저장·비교한다. (`ABC@Gmail.com` → `abc@gmail.com`)
+- 인증 코드는 `crypto.randomInt`로 생성한다. (`Math.random` 사용 금지)
+- `send-verification` 요청 시 `pendingVerifications`에 없는 이메일은 **200을 반환**한다 (계정 열거 공격 방지).
+
+#### 토큰 규칙
+
+| 항목 | 값 | 이유 |
+|------|-----|------|
+| Access Token 유효기간 | 24시간 | 짧게 유지해 탈취 피해 최소화 |
+| Refresh Token 유효기간 | 365일 | 앱 재실행 후 자동 로그인 유지 |
+| Refresh Token DB 저장 방식 | bcrypt 해싱 | DB 탈취 시 원본 복원 불가 |
+| Refresh Token Rotation | 재발급마다 새 토큰 발급 + 기존 즉시 폐기 | 이전 토큰 재사용 감지 시 전체 폐기 |
+
+#### 로그인 잠금
+
+- 비밀번호 20회 연속 실패 → `lockedUntil = 현재 + 5분`
+- 잠금 중 요청 → `403` + 잔여 분 반환
+- 잠금 만료 후 첫 요청 → `loginAttempts: 0`, `lockedUntil: null` 자동 초기화
+- 로그인 성공 시에도 `loginAttempts: 0` 초기화
+
+#### 클라이언트 상태 관리
+
+새 상태 추가 시 아래 표를 기준으로 저장소를 결정한다.
+
+| 데이터 | 저장소 | 앱 종료 후 | 이유 |
+|--------|--------|-----------|------|
+| `accessToken` | Zustand (`authStore`) | 소멸 | 메모리 빠른 접근, 유효기간 짧아 영구 저장 불필요 |
+| `refreshToken` | AsyncStorage | **유지** | 앱 재실행 후 자동 로그인 |
+| `isAuthenticated` | Zustand (`authStore`) | 소멸 | `accessToken` 유무에서 파생 |
+| 회원가입 중 `email`, `password` | Zustand (`signupStore`) | 소멸 | 2단계 화면 간 임시 공유, 완료 즉시 `clearSignupData()` |
+
+- `signupStore`는 AsyncStorage에 절대 저장하지 않는다. 앱 종료 = 회원가입 처음부터.
+- API 요청 시 Access Token 자동 첨부 → 401 응답 시 Axios 인터셉터가 자동 refresh 후 재시도.
+
+#### 구현된 엔드포인트
+
+| 메서드 | 경로 | 인증 | 설명 |
+|--------|------|------|------|
+| POST | `/api/auth/register` | 없음 | 이메일 인증 코드 발송 |
+| POST | `/api/auth/send-verification` | 없음 | 인증 코드 재발송 (1분 쿨다운) |
+| POST | `/api/auth/verify-email` | 없음 | 코드 검증 → 회원 생성 → 토큰 발급 |
+| POST | `/api/auth/login` | 없음 | 로그인 → 토큰 발급 |
+| POST | `/api/auth/refresh` | 없음 | Access Token 재발급 (Rotation) |
+| POST | `/api/auth/logout` | Bearer | Refresh Token 무효화 |
+
+---
+
+### 학습 도메인 (미구현 — `shared/types.ts`에 타입만 정의됨)
+
+향후 스프린트에서 구현 예정. 아래 용어를 코드 전체에서 일관되게 사용할 것.
 
 | 용어 | 설명 |
 |------|------|
-| `WordSet` | 사용자가 만든 단어 묶음 (10~20개) |
+| `WordSet` | 사용자가 만든 단어 묶음 |
 | `Word` | 단어 하나 |
+| `Difficulty` | `daily \| middle \| high \| sat_basic \| sat_advanced` |
+| `LearningPath` | 난이도에 따라 결정되는 Challenge 순서 |
+| `Challenge` | 경로 상의 개별 도전 |
 | `Stage` | `recognition \| recall \| expansion \| deepening \| production \| internalization` |
-| `SentenceLevel` | 예문 난이도 1~10 (1: 초등 저학년 ~ 10: 원서/논문) |
-| `EasyRange` | 처음 만날 때 사용하는 예문 구간 |
-| `ActiveRange` | 실전 적용에 사용하는 예문 구간 |
+| `SpacedItem` | 장기기억 루틴 대상 (Word × Stage 조합) |
+
 ---
 
 ## ✍️ 코딩 컨벤션
