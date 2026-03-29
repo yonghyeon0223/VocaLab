@@ -46,6 +46,17 @@ export type Challenge = {
   completedAt: string | null;
 };
 
+// 사용자 계정
+export type User = {
+  _id: string;
+  email: string;
+  password: string;             // bcrypt 해싱된 값 (평문 절대 저장 금지)
+  refreshToken: string | null;  // 로그인 시 저장, 로그아웃 시 null로 초기화
+  isVerified: boolean;          // 이메일 인증 여부 (Sprint 02에서 활용)
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 // 장기기억 루틴 대상 (Word × Stage 조합)
 export type SpacedItem = {
   id: string;
