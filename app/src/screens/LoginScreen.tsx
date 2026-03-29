@@ -7,6 +7,7 @@ import PasswordInput from '../components/ui/PasswordInput';
 import { colors } from '../constants/colors';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/RootNavigator';
+import { login } from '../services/authService';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Login'>;
@@ -16,15 +17,27 @@ export default function LoginScreen({ navigation }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  // 로그인 버튼을 눌렀을 때 기본 유효성만 확인한다.
-  // 실제 API 연동은 4번 작업(토큰 관리)에서 추가한다.
-  function handleLogin() {
+  // 서버에 로그인 요청을 보낸다.
+  // 성공하면 authStore가 업데이트되어 RootNavigator가 자동으로 메인 화면으로 전환한다.
+  async function handleLogin() {
     if (!email || !password) {
       setError('이메일과 비밀번호를 입력해주세요');
       return;
     }
     setError('');
+    setLoading(true);
+    try {
+      await login(email, password);
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+        '로그인에 실패했습니다';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -62,7 +75,7 @@ export default function LoginScreen({ navigation }: Props) {
           {/* 에러 메시지는 폼 아래에 한 번에 표시한다 */}
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
-          <Button label="로그인" onPress={handleLogin} />
+          <Button label={loading ? '로그인 중...' : '로그인'} onPress={handleLogin} disabled={loading} />
         </View>
 
         <TouchableOpacity onPress={() => navigation.navigate('Signup')}>

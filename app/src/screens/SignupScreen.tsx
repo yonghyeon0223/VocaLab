@@ -7,6 +7,7 @@ import PasswordInput from '../components/ui/PasswordInput';
 import { colors } from '../constants/colors';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/RootNavigator';
+import { register } from '../services/authService';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Signup'>;
@@ -16,11 +17,12 @@ export default function SignupScreen({ navigation }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
-  const [errors, setErrors] = useState<{ email?: string; password?: string; passwordConfirm?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; passwordConfirm?: string; general?: string }>({});
+  const [loading, setLoading] = useState(false);
 
-  // 회원가입 버튼을 눌렀을 때 클라이언트 측 기본 검증을 한다.
-  // 실제 API 연동은 4번 작업(토큰 관리)에서 추가한다.
-  function handleSignup() {
+  // 클라이언트 검증 후 서버에 회원가입 요청을 보낸다.
+  // 성공하면 로그인 화면으로 이동해 사용자가 직접 로그인하게 한다.
+  async function handleSignup() {
     const next: typeof errors = {};
 
     if (!email) next.email = '이메일을 입력해주세요';
@@ -31,6 +33,19 @@ export default function SignupScreen({ navigation }: Props) {
 
     setErrors(next);
     if (Object.keys(next).length > 0) return;
+
+    setLoading(true);
+    try {
+      await register(email, password, passwordConfirm);
+      navigation.navigate('Login');
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+        '회원가입에 실패했습니다';
+      setErrors({ general: message });
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -75,7 +90,9 @@ export default function SignupScreen({ navigation }: Props) {
             placeholder="비밀번호 다시 입력"
           />
 
-          <Button label="계정 만들기" onPress={handleSignup} />
+          {errors.general ? <Text style={styles.error}>{errors.general}</Text> : null}
+
+          <Button label={loading ? '처리 중...' : '계정 만들기'} onPress={handleSignup} disabled={loading} />
 
           <Text style={styles.terms}>
             계정을 만들면{' '}
@@ -129,6 +146,11 @@ const styles = StyleSheet.create({
   form: {
     width: '100%',
     gap: 16,
+  },
+  error: {
+    fontSize: 13,
+    color: colors.error,
+    textAlign: 'center',
   },
   terms: {
     fontSize: 11,
