@@ -64,12 +64,10 @@ vocalab/
 |------|------|
 | `WordSet` | 사용자가 만든 단어 묶음 (10~20개) |
 | `Word` | 단어 하나 |
-| `Difficulty` | `daily \| middle \| high \| sat_basic \| sat_advanced` |
-| `LearningPath` | 난이도에 따라 결정되는 Challenge 순서 |
-| `Challenge` | 경로 상의 개별 도전 |
 | `Stage` | `recognition \| recall \| expansion \| deepening \| production \| internalization` |
-| `SpacedItem` | 장기기억 루틴 대상 (Word × Stage 조합) |
-
+| `SentenceLevel` | 예문 난이도 1~10 (1: 초등 저학년 ~ 10: 원서/논문) |
+| `EasyRange` | 처음 만날 때 사용하는 예문 구간 |
+| `ActiveRange` | 실전 적용에 사용하는 예문 구간 |
 ---
 
 ## ✍️ 코딩 컨벤션
@@ -310,6 +308,8 @@ JWT_ACCESS_SECRET=
 JWT_REFRESH_SECRET=
 JWT_ACCESS_EXPIRES_IN=
 JWT_REFRESH_EXPIRES_IN=
+EMAIL_USER=
+EMAIL_PASS=
 
 # app/.env
 EXPO_PUBLIC_API_URL=
