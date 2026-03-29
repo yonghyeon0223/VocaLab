@@ -8,6 +8,7 @@ import ProfileLevelIntroScreen from '../screens/ProfileLevelIntroScreen';
 import ProfileLevelTestScreen from '../screens/ProfileLevelTestScreen';
 import ProfileLevelResultScreen from '../screens/ProfileLevelResultScreen';
 import ProfilePurposeScreen from '../screens/ProfilePurposeScreen';
+import ProfileCompleteScreen from '../screens/ProfileCompleteScreen';
 import MainScreen from '../screens/MainScreen';
 import { useAuthStore } from '../stores/authStore';
 import { useProfileStore } from '../stores/profileStore';
@@ -25,6 +26,7 @@ export type ProfileStackParamList = {
   ProfileLevelTest: undefined;
   ProfileLevelResult: undefined;
   ProfilePurpose: undefined;
+  ProfileComplete: undefined;
 };
 
 const AuthStack = createNativeStackNavigator<RootStackParamList>();
@@ -61,6 +63,7 @@ export default function RootNavigator() {
           <ProfileStack.Screen name="ProfileLevelTest" component={ProfileLevelTestScreen} />
           <ProfileStack.Screen name="ProfileLevelResult" component={ProfileLevelResultScreen} />
           <ProfileStack.Screen name="ProfilePurpose" component={ProfilePurposeScreen} />
+          <ProfileStack.Screen name="ProfileComplete" component={ProfileCompleteScreen} />
         </ProfileStack.Navigator>
       ) : (
         // 인증 + 프로필 완료 — 메인 앱
