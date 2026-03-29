@@ -1,5 +1,12 @@
 // 클라이언트와 서버가 함께 쓰는 도메인 타입을 정의한다.
-// 학습 도메인 타입은 추후 스프린트에서 확정 후 추가한다.
+
+// 문장 난이도 평가 값
+export type RatingValue = 'easy' | 'appropriate' | 'hard' | 'alien';
+
+// lv.1~10 각 레벨에 대한 평가 기록
+export type LevelRatings = {
+  [level: number]: RatingValue;
+};
 
 // 이메일 인증까지 완료한 사용자. 미인증 유저는 이 컬렉션에 존재하지 않는다.
 export type User = {
@@ -9,6 +16,14 @@ export type User = {
   refreshToken: string | null; // bcrypt 해싱 저장. Rotation 전략으로 재발급마다 교체
   loginAttempts: number;       // 기본값 0. 20회 도달 시 잠금
   lockedUntil: Date | null;    // 20회 실패 시 현재시각 + 5분
+  // 프로필 설정 필드 — 프로필 완료 전까지 기본값(빈 문자열, 0, [])으로 존재한다
+  profileCompleted: boolean;
+  nickname: string;
+  purposes: string[];          // 1~5개
+  easyLevel: number;           // 1~10, 기초 예문 레벨
+  activeLevel: number;         // 1~10, 학습 예문 레벨
+  hardLevel: number;           // 1~10, 심화 예문 레벨
+  levelRatings: LevelRatings;  // lv.1~10 전체 평가 기록
   createdAt: Date;
   updatedAt: Date;
 };

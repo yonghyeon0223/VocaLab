@@ -4,6 +4,7 @@ import { connectDB } from './utils/db';
 import { ensureIndexes as ensureUserIndexes } from './repositories/userRepository';
 import { ensureIndexes as ensurePendingIndexes } from './repositories/pendingVerificationRepository';
 import authRouter from './routes/auth';
+import profileRouter from './routes/profile';
 import { errorMiddleware } from './middlewares/errorMiddleware';
 
 const app = express();
@@ -17,6 +18,9 @@ app.get('/health', (_req, res) => {
 
 // 인증 관련 엔드포인트 (/api/auth/*)
 app.use('/api/auth', authRouter);
+
+// 유저 프로필 엔드포인트 (/api/users/*)
+app.use('/api/users', profileRouter);
 
 // 모든 라우터 아래에 에러 핸들러를 등록한다.
 app.use(errorMiddleware);

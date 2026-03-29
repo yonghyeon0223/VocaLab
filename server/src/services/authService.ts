@@ -100,7 +100,7 @@ export async function verifyEmail(email: string, password: string, code: string)
   // 인증이 완료됐으므로 임시 데이터를 즉시 삭제한다.
   await pendingRepo.deleteByEmail(normalized);
 
-  return { accessToken, refreshToken };
+  return { accessToken, refreshToken, profileCompleted: false };
 }
 
 // 로그인.
@@ -148,7 +148,7 @@ export async function login(email: string, password: string) {
   const hashedRefreshToken = await bcrypt.hash(refreshToken, BCRYPT_ROUNDS);
   await userRepository.updateRefreshToken(userId, hashedRefreshToken);
 
-  return { accessToken, refreshToken };
+  return { accessToken, refreshToken, profileCompleted: user.profileCompleted ?? false };
 }
 
 // Access Token 재발급 (Rotation 전략).
@@ -183,7 +183,11 @@ export async function refresh(refreshToken: string) {
   const hashedNewRefresh = await bcrypt.hash(newRefreshToken, BCRYPT_ROUNDS);
   await userRepository.updateRefreshToken(new ObjectId(userId), hashedNewRefresh);
 
-  return { accessToken: newAccessToken, refreshToken: newRefreshToken };
+  return {
+    accessToken: newAccessToken,
+    refreshToken: newRefreshToken,
+    profileCompleted: user.profileCompleted ?? false,
+  };
 }
 
 // 로그아웃.

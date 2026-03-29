@@ -30,6 +30,13 @@ export async function insertUser(data: {
     refreshToken: data.refreshToken,
     loginAttempts: 0,
     lockedUntil: null,
+    profileCompleted: false,
+    nickname: '',
+    purposes: [],
+    easyLevel: 0,
+    activeLevel: 0,
+    hardLevel: 0,
+    levelRatings: {},
     createdAt: now,
     updatedAt: now,
   });

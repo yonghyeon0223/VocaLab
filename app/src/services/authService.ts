@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuthStore } from '../stores/authStore';
+import { useProfileStore } from '../stores/profileStore';
 import api, { ASYNC_STORAGE_KEYS } from './api';
 
 // 회원가입 1단계 — 이메일만 전송해 중복 확인 + 인증 코드 발송을 요청한다.
@@ -15,15 +16,18 @@ export async function sendVerification(email: string) {
 
 // 회원가입 2단계 — 코드 검증 후 비밀번호를 설정하고 즉시 로그인 처리한다.
 // 성공하면 서버가 발급한 토큰을 authStore와 AsyncStorage에 각각 저장한다.
+// 신규 유저이므로 profileCompleted는 항상 false다.
 export async function verifyEmail(email: string, password: string, code: string) {
   const res = await api.post('/api/auth/verify-email', { email, password, code });
-  const { accessToken, refreshToken } = res.data.data as {
+  const { accessToken, refreshToken, profileCompleted } = res.data.data as {
     accessToken: string;
     refreshToken: string;
+    profileCompleted: boolean;
   };
 
   await AsyncStorage.setItem(ASYNC_STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
   useAuthStore.getState().setAccessToken(accessToken);
+  useProfileStore.getState().setProfile({ profileCompleted });
 }
 
 // 로그인 성공 시 두 토큰을 각각 적절한 저장소에 보관한다.
@@ -31,13 +35,15 @@ export async function verifyEmail(email: string, password: string, code: string)
 // Refresh Token → AsyncStorage (영구 저장, 앱 재실행에도 유지)
 export async function login(email: string, password: string) {
   const res = await api.post('/api/auth/login', { email, password });
-  const { accessToken, refreshToken } = res.data.data as {
+  const { accessToken, refreshToken, profileCompleted } = res.data.data as {
     accessToken: string;
     refreshToken: string;
+    profileCompleted: boolean;
   };
 
   await AsyncStorage.setItem(ASYNC_STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
   useAuthStore.getState().setAccessToken(accessToken);
+  useProfileStore.getState().setProfile({ profileCompleted });
 }
 
 // 앱 재실행 시 AsyncStorage에 Refresh Token이 있으면 자동 로그인을 시도한다.
@@ -48,8 +54,12 @@ export async function tryAutoLogin() {
 
   try {
     const res = await api.post('/api/auth/refresh', { refreshToken });
-    const { accessToken } = res.data.data as { accessToken: string };
+    const { accessToken, profileCompleted } = res.data.data as {
+      accessToken: string;
+      profileCompleted: boolean;
+    };
     useAuthStore.getState().setAccessToken(accessToken);
+    useProfileStore.getState().setProfile({ profileCompleted });
   } catch {
     await AsyncStorage.removeItem(ASYNC_STORAGE_KEYS.REFRESH_TOKEN);
   }
@@ -63,5 +73,6 @@ export async function logout() {
   } finally {
     await AsyncStorage.removeItem(ASYNC_STORAGE_KEYS.REFRESH_TOKEN);
     useAuthStore.getState().clearAuth();
+    useProfileStore.getState().clearProfile();
   }
 }
