@@ -12,9 +12,6 @@ type PasswordInputProps = {
   placeholder?: string;
 };
 
-// 비밀번호 강도를 4단계로 판단한다.
-// 길이 → 영문 → 숫자 → 특수문자 순으로 조건을 쌓아
-// 충족한 조건 수만큼 강도 바를 채운다.
 function getStrength(password: string): number {
   if (password.length === 0) return 0;
   let score = 0;
@@ -39,11 +36,16 @@ export default function PasswordInput({
   const [visible, setVisible] = useState(false);
   const strength = getStrength(value);
 
+  // label과 error는 PasswordInput이 직접 렌더링한다.
+  // TextInput에 넘기지 않아야 toggle 버튼이 입력창 안에서만 고정된다.
+  // TextInput에 label/error까지 넘기면 wrapper 높이가 달라져 toggle 위치가 밀린다.
   return (
     <View style={styles.wrapper}>
-      <View style={styles.inputRow}>
+      {label && <Text style={styles.label}>{label}</Text>}
+
+      {/* toggle은 입력창에만 겹쳐야 한다. inputBox 안에서만 절대 위치를 쓴다. */}
+      <View style={styles.inputBox}>
         <TextInput
-          label={label}
           value={value}
           onChangeText={onChangeText}
           error={error}
@@ -51,7 +53,6 @@ export default function PasswordInput({
           placeholder={placeholder}
           style={styles.input}
         />
-        {/* 비밀번호를 보이게/숨기게 전환하는 토글 버튼 */}
         <TouchableOpacity
           onPress={() => setVisible((v) => !v)}
           style={styles.toggle}
@@ -61,7 +62,6 @@ export default function PasswordInput({
         </TouchableOpacity>
       </View>
 
-      {/* 강도 바는 showStrength prop이 켜져 있고 값이 있을 때만 표시한다 */}
       {showStrength && value.length > 0 && (
         <View style={styles.strengthWrapper}>
           <View style={styles.bars}>
@@ -87,9 +87,14 @@ export default function PasswordInput({
 const styles = StyleSheet.create({
   wrapper: {
     width: '100%',
-    gap: 8,
+    gap: 6,
   },
-  inputRow: {
+  label: {
+    fontSize: 12,
+    fontWeight: '400',
+    color: colors.text.secondary,
+  },
+  inputBox: {
     position: 'relative',
   },
   input: {
@@ -98,7 +103,9 @@ const styles = StyleSheet.create({
   toggle: {
     position: 'absolute',
     right: 16,
-    bottom: 14,
+    // 입력창 paddingVertical(14)의 중간에 맞춘다.
+    // label과 error는 inputBox 밖에 있으므로 이 값이 밀리지 않는다.
+    top: 14,
   },
   toggleText: {
     fontSize: 12,
