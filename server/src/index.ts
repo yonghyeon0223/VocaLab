@@ -3,6 +3,7 @@ import { ENV } from './utils/env';
 import { connectDB } from './utils/db';
 import { ensureIndexes as ensureUserIndexes } from './repositories/userRepository';
 import { ensureIndexes as ensurePendingIndexes } from './repositories/pendingVerificationRepository';
+import authRouter from './routes/auth';
 import { errorMiddleware } from './middlewares/errorMiddleware';
 
 const app = express();
@@ -14,7 +15,10 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
-// 라우터는 Sprint 02 구현 완료 후 여기에 등록한다.
+// 인증 관련 엔드포인트 (/api/auth/*)
+app.use('/api/auth', authRouter);
+
+// 모든 라우터 아래에 에러 핸들러를 등록한다.
 app.use(errorMiddleware);
 
 // DB 연결 → 인덱스 준비 → 서버 오픈 순서를 지킨다.
