@@ -169,20 +169,6 @@ type PendingVerification = {
 
 ---
 
-### 학습 도메인 (미구현 — `shared/types.ts`에 타입만 정의됨)
-
-향후 스프린트에서 구현 예정. 아래 용어를 코드 전체에서 일관되게 사용할 것.
-
-| 용어 | 설명 |
-|------|------|
-| `WordSet` | 사용자가 만든 단어 묶음 |
-| `Word` | 단어 하나 |
-| `Difficulty` | `daily \| middle \| high \| sat_basic \| sat_advanced` |
-| `LearningPath` | 난이도에 따라 결정되는 Challenge 순서 |
-| `Challenge` | 경로 상의 개별 도전 |
-| `Stage` | `recognition \| recall \| expansion \| deepening \| production \| internalization` |
-| `SpacedItem` | 장기기억 루틴 대상 (Word × Stage 조합) |
-
 ---
 
 ## ✍️ 코딩 컨벤션
