@@ -11,13 +11,35 @@ type ProfileUpdateInput = {
 };
 
 // 프로필 필드를 부분 업데이트한다.
-// 성공하면 profileStore의 nickname도 함께 갱신해 UI가 최신 상태를 유지한다.
+// 성공하면 전달한 필드를 profileStore에도 반영해 UI가 최신 상태를 유지한다.
 export async function updateProfile(data: ProfileUpdateInput) {
   const res = await api.patch('/api/users/profile', data);
-  const user = res.data.data.user as { nickname?: string };
+  const user = res.data.data.user as {
+    nickname?: string;
+    purposes?: string[];
+    easyLevel?: number;
+    activeLevel?: number;
+    hardLevel?: number;
+  };
+
+  const store = useProfileStore.getState();
 
   if (user.nickname !== undefined) {
-    useProfileStore.getState().setNickname(user.nickname);
+    store.setNickname(user.nickname);
+  }
+  if (user.purposes !== undefined) {
+    store.setPurposes(user.purposes);
+  }
+  if (
+    user.easyLevel !== undefined &&
+    user.activeLevel !== undefined &&
+    user.hardLevel !== undefined
+  ) {
+    store.setLevels({
+      easyLevel: user.easyLevel,
+      activeLevel: user.activeLevel,
+      hardLevel: user.hardLevel,
+    });
   }
 }
 
