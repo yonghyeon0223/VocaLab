@@ -2,11 +2,28 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuthStore } from '../stores/authStore';
 import api, { ASYNC_STORAGE_KEYS } from './api';
 
-// 회원가입 후 바로 로그인 처리는 하지 않는다.
-// 회원가입과 로그인을 분리해 사용자가 명시적으로 로그인하게 한다.
-export async function register(email: string, password: string, passwordConfirm: string) {
-  const res = await api.post('/api/auth/register', { email, password, passwordConfirm });
-  return res.data.data as { userId: string };
+// 회원가입 1단계 — 이메일만 전송해 중복 확인 + 인증 코드 발송을 요청한다.
+// 비밀번호는 이메일 인증 완료 단계(verifyEmail)에서 함께 보낸다.
+export async function register(email: string) {
+  await api.post('/api/auth/register', { email });
+}
+
+// 인증 코드 재발송 — 1분 쿨다운은 서버가 강제하므로 클라이언트는 그냥 요청한다.
+export async function sendVerification(email: string) {
+  await api.post('/api/auth/send-verification', { email });
+}
+
+// 회원가입 2단계 — 코드 검증 후 비밀번호를 설정하고 즉시 로그인 처리한다.
+// 성공하면 서버가 발급한 토큰을 authStore와 AsyncStorage에 각각 저장한다.
+export async function verifyEmail(email: string, password: string, code: string) {
+  const res = await api.post('/api/auth/verify-email', { email, password, code });
+  const { accessToken, refreshToken } = res.data.data as {
+    accessToken: string;
+    refreshToken: string;
+  };
+
+  await AsyncStorage.setItem(ASYNC_STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
+  useAuthStore.getState().setAccessToken(accessToken);
 }
 
 // 로그인 성공 시 두 토큰을 각각 적절한 저장소에 보관한다.

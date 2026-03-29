@@ -2,12 +2,14 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import LoginScreen from '../screens/LoginScreen';
 import SignupScreen from '../screens/SignupScreen';
+import VerifyEmailScreen from '../screens/VerifyEmailScreen';
 import MainScreen from '../screens/MainScreen';
 import { useAuthStore } from '../stores/authStore';
 
 export type RootStackParamList = {
   Login: undefined;
   Signup: undefined;
+  VerifyEmail: undefined;
   Main: undefined;
 };
 
@@ -35,6 +37,7 @@ export default function RootNavigator() {
           <>
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Signup" component={SignupScreen} />
+            <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} />
           </>
         )}
       </Stack.Navigator>

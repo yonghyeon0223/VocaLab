@@ -8,6 +8,7 @@ import { colors } from '../constants/colors';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/RootNavigator';
 import { register } from '../services/authService';
+import { useSignupStore } from '../stores/signupStore';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Signup'>;
@@ -20,9 +21,11 @@ export default function SignupScreen({ navigation }: Props) {
   const [errors, setErrors] = useState<{ email?: string; password?: string; passwordConfirm?: string; general?: string }>({});
   const [loading, setLoading] = useState(false);
 
-  // 클라이언트 검증 후 서버에 회원가입 요청을 보낸다.
-  // 성공하면 로그인 화면으로 이동해 사용자가 직접 로그인하게 한다.
-  async function handleSignup() {
+  const setSignupData = useSignupStore((s) => s.setSignupData);
+
+  // 클라이언트 검증 후 서버에 이메일 인증 코드 발송을 요청한다.
+  // 이메일/비밀번호를 signupStore에 임시 저장한 뒤 코드 입력 화면으로 이동한다.
+  async function handleNext() {
     const next: typeof errors = {};
 
     if (!email) next.email = '이메일을 입력해주세요';
@@ -30,18 +33,21 @@ export default function SignupScreen({ navigation }: Props) {
     if (password && passwordConfirm && password !== passwordConfirm) {
       next.passwordConfirm = '비밀번호가 일치하지 않습니다';
     }
+    if (password && !passwordConfirm) next.passwordConfirm = '비밀번호를 한 번 더 입력해주세요';
 
     setErrors(next);
     if (Object.keys(next).length > 0) return;
 
     setLoading(true);
     try {
-      await register(email, password, passwordConfirm);
-      navigation.navigate('Login');
+      await register(email);
+      // 이메일/비밀번호를 store에 보관해 다음 화면에서 꺼내 쓸 수 있게 한다.
+      setSignupData(email, password);
+      navigation.navigate('VerifyEmail');
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        '회원가입에 실패했습니다';
+        '이메일 발송에 실패했습니다';
       setErrors({ general: message });
     } finally {
       setLoading(false);
@@ -92,7 +98,7 @@ export default function SignupScreen({ navigation }: Props) {
 
           {errors.general ? <Text style={styles.error}>{errors.general}</Text> : null}
 
-          <Button label={loading ? '처리 중...' : '계정 만들기'} onPress={handleSignup} disabled={loading} />
+          <Button label={loading ? '처리 중...' : '다음'} onPress={handleNext} disabled={loading} />
 
           <Text style={styles.terms}>
             계정을 만들면{' '}
