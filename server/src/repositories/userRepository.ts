@@ -14,6 +14,10 @@ export async function findByEmail(email: string) {
   return col().findOne({ email });
 }
 
+export async function findById(userId: ObjectId) {
+  return col().findOne({ _id: userId });
+}
+
 export async function insertUser(data: {
   email: string;
   password: string;
