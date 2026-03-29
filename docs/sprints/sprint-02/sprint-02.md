@@ -286,8 +286,8 @@ type SignupStore = {
 ## 작업 목록
 
 ### 0. 기존 코드 정리 (가장 먼저)
-- [ ] 기존 `users` 컬렉션 documents 전부 삭제
-- [ ] Sprint 01 인증 관련 파일 전부 삭제
+- [x] 기존 `users` 컬렉션 documents 전부 삭제
+- [x] Sprint 01 인증 관련 파일 전부 삭제
   - `userRepository.ts`
   - `authService.ts`
   - `authMiddleware.ts`
@@ -296,28 +296,28 @@ type SignupStore = {
   - `routes/auth.ts`
 
 ### 1. 공통 유틸
-- [ ] `server/src/utils/jwt.ts` — Access Token (24시간) / Refresh Token (365일)
-- [ ] `server/src/utils/mailer.ts` — Nodemailer Gmail SMTP
-- [ ] `server/src/utils/verificationCode.ts` — 6자리 랜덤 코드 생성
+- [x] `server/src/utils/jwt.ts` — Access Token (24시간) / Refresh Token (365일)
+- [x] `server/src/utils/mailer.ts` — Nodemailer Gmail SMTP
+- [x] `server/src/utils/verificationCode.ts` — 6자리 랜덤 코드 생성
 
 ### 2. DB 레이어
-- [ ] `shared/types.ts` — User, PendingVerification 타입 정의
-- [ ] `server/src/repositories/userRepository.ts` — 전면 재작성
+- [x] `shared/types.ts` — User, PendingVerification 타입 정의
+- [x] `server/src/repositories/userRepository.ts` — 전면 재작성
   - `findByEmail`
   - `insertUser`
   - `updateRefreshToken`
   - `incrementLoginAttempts`
   - `lockUser`
   - `resetLoginAttempts`
-- [ ] `server/src/repositories/pendingVerificationRepository.ts` — 신규
+- [x] `server/src/repositories/pendingVerificationRepository.ts` — 신규
   - `findByEmail`
   - `upsert`
   - `incrementAttempts`
   - `deleteByEmail`
 
 ### 3. 비즈니스 로직
-- [ ] `server/src/validators/authValidator.ts` — Zod 스키마
-- [ ] `server/src/services/authService.ts` — 전면 재작성
+- [x] `server/src/validators/authValidator.ts` — Zod 스키마
+- [x] `server/src/services/authService.ts` — 전면 재작성
   - `register`
   - `sendVerification`
   - `verifyEmail`
@@ -326,22 +326,22 @@ type SignupStore = {
   - `logout`
 
 ### 4. 미들웨어
-- [ ] `server/src/middlewares/authenticate.ts` — Access Token 유효성만 확인
+- [x] `server/src/middlewares/authenticate.ts` — Access Token 유효성만 확인
 
 ### 5. 라우터
-- [ ] `server/src/routes/auth.ts` — 6개 엔드포인트
+- [x] `server/src/routes/auth.ts` — 6개 엔드포인트
 
 ### 6. App
-- [ ] `stores/signupStore.ts` — 회원가입 임시 상태 (메모리만)
-- [ ] `screens/SignupScreen.tsx` 수정 — register 요청 시 password Zustand에 보관
-- [ ] `screens/VerifyEmailScreen.tsx` — 신규
+- [x] `stores/signupStore.ts` — 회원가입 임시 상태 (메모리만)
+- [x] `screens/SignupScreen.tsx` 수정 — register 요청 시 password Zustand에 보관
+- [x] `screens/VerifyEmailScreen.tsx` — 신규
   - 타이틀: "이메일을 확인해주세요"
   - 부제목: "{email}로 발송된 6자리 코드를 입력해주세요"
   - OTP 입력 (6칸, 자동 포커스 이동)
   - 인증 완료 버튼
   - 재발송 버튼 (1분 쿨다운 타이머)
   - 에러 메시지
-- [ ] verify-email 성공 후 signupStore 초기화 → 토큰 저장 → 메인 화면
+- [x] verify-email 성공 후 signupStore 초기화 → 토큰 저장 → 메인 화면
 
 ---
 
