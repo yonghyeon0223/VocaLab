@@ -28,6 +28,14 @@ export type User = {
   updatedAt: Date;
 };
 
+// 레벨 테스트용 예문. testSentences 컬렉션에 저장된다.
+export type TestSentence = {
+  _id: string;
+  level: number;       // 1~10
+  text: string;        // 영어 원문
+  translation: string; // 한국어 번역
+};
+
 // 이메일 인증 대기 중인 임시 데이터. 인증 완료 또는 만료 시 삭제된다.
 export type PendingVerification = {
   _id: string;

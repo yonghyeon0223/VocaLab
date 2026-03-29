@@ -5,6 +5,9 @@ import { ensureIndexes as ensureUserIndexes } from './repositories/userRepositor
 import { ensureIndexes as ensurePendingIndexes } from './repositories/pendingVerificationRepository';
 import authRouter from './routes/auth';
 import profileRouter from './routes/profile';
+import sentenceRouter from './routes/sentences';
+import { seedIfEmpty } from './repositories/sentenceRepository';
+import { TEST_SENTENCES } from './seeds/testSentences';
 import { errorMiddleware } from './middlewares/errorMiddleware';
 
 const app = express();
@@ -22,6 +25,9 @@ app.use('/api/auth', authRouter);
 // 유저 프로필 엔드포인트 (/api/users/*)
 app.use('/api/users', profileRouter);
 
+// 예문 엔드포인트 (/api/sentences/*)
+app.use('/api/sentences', sentenceRouter);
+
 // 모든 라우터 아래에 에러 핸들러를 등록한다.
 app.use(errorMiddleware);
 
@@ -31,6 +37,8 @@ async function bootstrap() {
   await connectDB();
   await ensureUserIndexes();
   await ensurePendingIndexes();
+  // testSentences 컬렉션이 비어있으면 시드 데이터를 삽입한다.
+  await seedIfEmpty(TEST_SENTENCES);
   app.listen(ENV.PORT, () => {
     console.log(`서버가 ${ENV.PORT}에서 실행 중입니다.`);
   });
