@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ProfileStackParamList } from '../navigation/RootNavigator';
+import { LevelRatings } from '../../../shared/types';
 import { useLevelTestStore } from '../stores/levelTestStore';
 import { calculateLevels } from '../utils/levelCalculator';
 import { updateProfile } from '../services/profileService';
@@ -20,12 +21,44 @@ const FALLBACK_MESSAGES = {
   hard: '어려운 구간이 없어서 가장 높은 레벨로 설정할게요.',
 };
 
-// 각 결과 카드의 레이블과 어떤 레벨을 표시하는지 정의
+// 각 결과 카드의 레이블, 레벨 키, 색상 정의.
+// 차트의 색상 구간과 시각적으로 일치시킨다.
 const RESULT_CARDS = [
-  { label: '처음 만날 때', key: 'easyLevel' as const },
-  { label: '실전 적용',    key: 'activeLevel' as const },
-  { label: '심화',         key: 'hardLevel' as const },
+  { label: '처음 만날 때', key: 'easyLevel' as const,   color: '#4caf7d' },
+  { label: '실전 적용',    key: 'activeLevel' as const,  color: colors.accent },
+  { label: '심화',         key: 'hardLevel' as const,    color: '#e8a838' },
 ];
+
+// 바 차트에 표시할 색상을 계산한다.
+// easy 구간은 레벨 번호가 높은 상위 2개만 easy 색상으로 표시한다.
+// → 경계 구간만 강조해 차트가 초록으로 압도되지 않게 한다.
+// alien 구간은 가장 낮은 1개만 alien 색상으로, 나머지는 hard 색상으로 표시한다.
+// → alien이 여러 레벨이어도 경계 1개만 빨간색이 된다.
+function getBarColor(level: number, ratings: LevelRatings): string {
+  const rating = ratings[level];
+  if (!rating) return colors.background.tertiary;
+
+  if (rating === 'easy') {
+    const topTwo = Object.keys(ratings)
+      .map(Number)
+      .filter((l) => ratings[l] === 'easy')
+      .sort((a, b) => b - a)
+      .slice(0, 2);
+    if (!topTwo.includes(level)) return colors.background.tertiary;
+  }
+
+  if (rating === 'alien') {
+    const lowestAlien = Object.keys(ratings)
+      .map(Number)
+      .filter((l) => ratings[l] === 'alien')
+      .sort((a, b) => a - b)[0];
+    if (level !== lowestAlien) {
+      return RATING_OPTIONS.find((o) => o.value === 'hard')!.color;
+    }
+  }
+
+  return RATING_OPTIONS.find((o) => o.value === rating)!.color;
+}
 
 export default function ProfileLevelResultScreen({ navigation }: Props) {
   const { ratings } = useLevelTestStore();
@@ -58,14 +91,12 @@ export default function ProfileLevelResultScreen({ navigation }: Props) {
       <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>학습 구간이{'\n'}설정됐어요</Text>
 
-        {/* 바 차트: lv.1~10 평가 결과를 색상으로 표시 */}
+        {/* 바 차트: lv.1~10 평가 결과를 색상으로 표시
+            easy 최대 2개, alien 최대 1개 규칙을 적용해 경계 구간을 강조한다 */}
         <View style={styles.chart}>
           {Array.from({ length: 10 }, (_, i) => {
             const level = i + 1;
-            const rating = ratings[level];
-            const barColor = rating
-              ? RATING_OPTIONS.find((o) => o.value === rating)!.color
-              : colors.background.tertiary;
+            const barColor = getBarColor(level, ratings);
             return (
               <View key={level} style={styles.chartRow}>
                 <Text style={styles.chartLabel}>lv.{level}</Text>
@@ -90,14 +121,14 @@ export default function ProfileLevelResultScreen({ navigation }: Props) {
           </View>
         )}
 
-        {/* 결과 카드 3개 */}
+        {/* 결과 카드 3개: 각 레벨 번호를 차트 색상 구간과 일치시켜 직관성을 높인다 */}
         <View style={styles.resultCards}>
-          {RESULT_CARDS.map(({ label, key }) => {
+          {RESULT_CARDS.map(({ label, key, color }) => {
             const level = { easyLevel, activeLevel, hardLevel }[key];
             return (
               <View key={key} style={styles.resultCard}>
                 <Text style={styles.resultCardLabel}>{label}</Text>
-                <Text style={styles.resultCardLevel}>
+                <Text style={[styles.resultCardLevel, { color }]}>
                   lv.{level}
                   <Text style={styles.resultCardLevelSub}> — {LEVEL_LABELS[level]}</Text>
                 </Text>
@@ -188,7 +219,7 @@ const styles = StyleSheet.create({
   resultCardLevel: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.accent,
+    // color는 각 카드에서 인라인으로 지정한다 (easy→초록, active→보라, hard→노랑)
   },
   resultCardLevelSub: {
     fontSize: 14,
