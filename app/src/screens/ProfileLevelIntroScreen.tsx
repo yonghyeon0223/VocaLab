@@ -9,18 +9,22 @@ type Props = {
 };
 
 // 세 가지 예문 구간이 각각 어떤 역할을 하는지 카드로 설명한다.
+// 결과 화면 차트의 색상 구간과 동일한 포인트 컬러를 사용해 시각적 일관성을 유지한다.
 const CARDS = [
   {
     label: '처음 만날 때',
     description: '먼저 쉬운 문장으로 단어와 자연스럽게 친해져요',
+    color: '#4caf7d',
   },
   {
     label: '실전 적용',
     description: '내 수준의 문장에서 단어를 실제로 써볼 수 있게 만들어요',
+    color: '#6c63ff',
   },
   {
     label: '심화',
     description: '한 단계 위의 문장에 도전하면서 단어와 함께 영어 실력도 올려요',
+    color: '#e8a838',
   },
 ];
 
@@ -40,8 +44,12 @@ export default function ProfileLevelIntroScreen({ navigation }: Props) {
 
         <View style={styles.cards}>
           {CARDS.map((card) => (
-            <View key={card.label} style={styles.card}>
-              <Text style={styles.cardLabel}>{card.label}</Text>
+            // 보더 없이 배경 tint + 라벨 컬러로 구간을 구분한다
+            <View
+              key={card.label}
+              style={[styles.card, { backgroundColor: card.color + '18' }]}
+            >
+              <Text style={[styles.cardLabel, { color: card.color }]}>{card.label}</Text>
               <Text style={styles.cardDescription}>{card.description}</Text>
             </View>
           ))}
@@ -87,12 +95,9 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   card: {
-    backgroundColor: colors.background.secondary,
     borderRadius: 14,
     padding: 16,
     gap: 6,
-    borderWidth: 1,
-    borderColor: colors.border.default,
   },
   cardLabel: {
     fontSize: 14,
