@@ -27,6 +27,17 @@ export default function ProfileLevelIntroScreen({ navigation }: Props) {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>딱 맞는 예문을{'\n'}찾아드릴게요</Text>
+
+        {/* 문맥 학습 원리 — 왜 난이도가 중요한지 설명한다 */}
+        <View style={styles.reasonBox}>
+          <Text style={styles.reasonHeadline}>VocaLab은 문맥 속에서 단어를 익혀요</Text>
+          <Text style={styles.reasonBody}>
+            너무 쉬우면 기억에 안 남고,{'\n'}
+            너무 어려우면 뜻이 파악되지 않아요.{'\n'}
+            딱 맞는 예문이어야 단어가 자연스럽게 머릿속에 남아요.
+          </Text>
+        </View>
+
         <Text style={styles.subtitle}>문장 몇 개를 보고 느낌을 알려주세요.</Text>
       </View>
 
@@ -64,7 +75,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   header: {
-    gap: 10,
+    gap: 16,
   },
   title: {
     fontSize: 28,
@@ -72,10 +83,28 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     lineHeight: 40,
   },
-  subtitle: {
-    fontSize: 15,
+  reasonBox: {
+    backgroundColor: colors.background.secondary,
+    borderRadius: 12,
+    padding: 16,
+    gap: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.accent,
+  },
+  reasonHeadline: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.accent,
+  },
+  reasonBody: {
+    fontSize: 13,
     color: colors.text.secondary,
-    lineHeight: 22,
+    lineHeight: 20,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: colors.text.secondary,
+    lineHeight: 20,
   },
   cards: {
     gap: 16,
