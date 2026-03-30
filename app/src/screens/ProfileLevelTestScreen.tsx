@@ -131,9 +131,7 @@ export default function ProfileLevelTestScreen({ navigation }: Props) {
             const isCurrent = lv === currentLevel;
             const segColor = rated
               ? RATING_OPTIONS.find((o) => o.value === rated)!.color
-              : isCurrent
-                ? colors.accent
-                : colors.background.tertiary;
+              : colors.background.tertiary;
             return (
               <TouchableOpacity
                 key={lv}
@@ -151,20 +149,17 @@ export default function ProfileLevelTestScreen({ navigation }: Props) {
             여러 예문이 있을 때만 아이콘이 나타난다. */}
         {currentSentence ? (
           <View style={styles.sentenceCard}>
-            <Text style={styles.sentenceText}>{currentSentence.text}</Text>
-            <View style={styles.divider} />
-            <View style={styles.translationRow}>
-              <Text style={styles.translationText}>{currentSentence.translation}</Text>
+            {/* 영어 문장 옆에 reload 아이콘을 배치해 다른 예문으로 교체할 수 있음을 직관적으로 표현한다 */}
+            <View style={styles.sentenceRow}>
+              <Text style={styles.sentenceText}>{currentSentence.text}</Text>
               {currentSentences.length > 1 && (
                 <TouchableOpacity onPress={handleCycleSentence} hitSlop={12}>
-                  <Ionicons
-                    name="refresh-outline"
-                    size={18}
-                    color={colors.accent}
-                  />
+                  <Ionicons name="refresh-outline" size={18} color={colors.accent} />
                 </TouchableOpacity>
               )}
             </View>
+            <View style={styles.divider} />
+            <Text style={styles.translationText}>{currentSentence.translation}</Text>
           </View>
         ) : (
           <View style={styles.sentenceCard}>
@@ -295,6 +290,7 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   sentenceText: {
+    flex: 1,
     fontSize: 16,
     color: colors.text.primary,
     lineHeight: 26,
@@ -304,14 +300,13 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: colors.border.default,
   },
-  // 번역 텍스트와 다음 예문 아이콘을 한 row에 나란히 배치한다.
-  translationRow: {
+  // 영어 문장과 reload 아이콘을 한 row에 배치한다.
+  sentenceRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 10,
   },
   translationText: {
-    flex: 1,
     fontSize: 14,
     color: colors.text.secondary,
     lineHeight: 22,
