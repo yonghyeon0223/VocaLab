@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ProfileStackParamList } from '../navigation/RootNavigator';
 import { RatingValue } from '../../../shared/types';
@@ -137,12 +138,25 @@ export default function ProfileLevelTestScreen({ navigation }: Props) {
       </View>
 
       <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
-        {/* 문장 카드 */}
+        {/* 문장 카드
+            하단 row에 번역과 다음 예문 아이콘을 나란히 배치한다.
+            여러 예문이 있을 때만 아이콘이 나타난다. */}
         {currentSentence ? (
           <View style={styles.sentenceCard}>
             <Text style={styles.sentenceText}>{currentSentence.text}</Text>
             <View style={styles.divider} />
-            <Text style={styles.translationText}>{currentSentence.translation}</Text>
+            <View style={styles.translationRow}>
+              <Text style={styles.translationText}>{currentSentence.translation}</Text>
+              {currentSentences.length > 1 && (
+                <TouchableOpacity onPress={handleCycleSentence} hitSlop={12}>
+                  <Ionicons
+                    name="refresh-outline"
+                    size={18}
+                    color={colors.text.disabled}
+                  />
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
         ) : (
           <View style={styles.sentenceCard}>
@@ -150,14 +164,8 @@ export default function ProfileLevelTestScreen({ navigation }: Props) {
           </View>
         )}
 
-        {/* 다른 예문 보기 */}
-        {currentSentences.length > 1 && (
-          <TouchableOpacity onPress={handleCycleSentence} style={styles.cycleButton}>
-            <Text style={styles.cycleText}>다른 예문 보기</Text>
-          </TouchableOpacity>
-        )}
-
-        {/* 4지선다 평가 버튼 */}
+        {/* 4지선다 평가 버튼
+            보더 없이 배경 tint로 구분하고, 선택 시 배경을 채워 강조한다. */}
         <View style={styles.ratingButtons}>
           {RATING_OPTIONS.map((option) => {
             const disabled = isButtonDisabled(option.value);
@@ -167,9 +175,9 @@ export default function ProfileLevelTestScreen({ navigation }: Props) {
                 key={option.value}
                 style={[
                   styles.ratingButton,
-                  { borderColor: option.color },
-                  selected && { backgroundColor: option.color },
-                  disabled && styles.ratingButtonDisabled,
+                  disabled
+                    ? styles.ratingButtonDisabled
+                    : { backgroundColor: selected ? option.color : option.color + '20' },
                 ]}
                 onPress={() => setRating(currentLevel, option.value)}
                 disabled={disabled}
@@ -263,8 +271,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background.secondary,
     borderRadius: 14,
     padding: 20,
-    borderWidth: 1,
-    borderColor: colors.border.default,
     gap: 14,
   },
   sentenceText: {
@@ -277,29 +283,28 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: colors.border.default,
   },
+  // 번역 텍스트와 다음 예문 아이콘을 한 row에 나란히 배치한다.
+  translationRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
   translationText: {
+    flex: 1,
     fontSize: 14,
     color: colors.text.secondary,
     lineHeight: 22,
-  },
-  cycleButton: {
-    alignSelf: 'center',
-  },
-  cycleText: {
-    fontSize: 13,
-    color: colors.accent,
   },
   ratingButtons: {
     gap: 10,
   },
   ratingButton: {
-    borderWidth: 1.5,
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
   },
   ratingButtonDisabled: {
-    borderColor: colors.background.tertiary,
+    backgroundColor: colors.background.secondary,
   },
   ratingButtonText: {
     fontSize: 15,
