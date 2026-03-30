@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Button from '../components/ui/Button';
 import { colors } from '../constants/colors';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -8,41 +8,52 @@ type Props = {
   navigation: NativeStackNavigationProp<ProfileStackParamList, 'ProfileLevelIntro'>;
 };
 
-// easyLevel과 activeLevel이 각각 어느 학습 활동에 쓰이는지 카드로 설명한다.
+// 세 가지 예문 구간이 각각 어떤 역할을 하는지 카드로 설명한다.
 const CARDS = [
   {
     label: '처음 만날 때',
-    description: '새 단어를 처음 접할 때 사용하는 예문 난이도예요.',
+    description: '먼저 쉬운 문장으로 단어와 자연스럽게 친해져요',
   },
   {
     label: '실전 적용',
-    description: '단어를 실제로 활용하는 연습에 사용하는 예문 난이도예요.',
+    description: '내 수준의 문장에서 단어를 실제로 써볼 수 있게 만들어요',
+  },
+  {
+    label: '심화',
+    description: '한 단계 위의 문장에 도전하면서 단어와 함께 영어 실력도 올려요',
   },
 ];
 
 export default function ProfileLevelIntroScreen({ navigation }: Props) {
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>VocaLab은 문맥 속에서{'\n'}단어를 익혀요.</Text>
-        <Text style={styles.subtitle}>
-          단어를 처음 배울 때와 읽고, 듣고, 말하고, 쓰기에{'\n'}적합한 예문 난이도를 찾아볼거예요.
-        </Text>
-      </View>
+      <ScrollView
+        contentContainerStyle={styles.body}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.header}>
+          <Text style={styles.title}>단어를 외워도{'\n'}막상 쓸 때 생각이 안 나죠?</Text>
+          <Text style={styles.subtitle}>
+            읽고, 듣고, 말하고, 쓰면서{'\n'}문맥 속에서 익힌 단어는 달라요.
+          </Text>
+        </View>
 
-      <View style={styles.cards}>
-        {CARDS.map((card) => (
-          <View key={card.label} style={styles.card}>
-            <Text style={styles.cardLabel}>{card.label}</Text>
-            <Text style={styles.cardDescription}>{card.description}</Text>
-          </View>
-        ))}
-      </View>
+        <View style={styles.cards}>
+          {CARDS.map((card) => (
+            <View key={card.label} style={styles.card}>
+              <Text style={styles.cardLabel}>{card.label}</Text>
+              <Text style={styles.cardDescription}>{card.description}</Text>
+            </View>
+          ))}
+        </View>
+      </ScrollView>
 
-      <Button
-        label="문장 보러 가기"
-        onPress={() => navigation.navigate('ProfileLevelTest')}
-      />
+      <View style={styles.footer}>
+        <Button
+          label="문장 보러 가기"
+          onPress={() => navigation.navigate('ProfileLevelTest')}
+        />
+      </View>
     </View>
   );
 }
@@ -51,9 +62,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background.primary,
+  },
+  body: {
     paddingHorizontal: 24,
-    paddingVertical: 64,
-    justifyContent: 'space-between',
+    paddingTop: 64,
+    paddingBottom: 24,
+    gap: 36,
   },
   header: {
     gap: 12,
@@ -70,18 +84,18 @@ const styles = StyleSheet.create({
     lineHeight: 23,
   },
   cards: {
-    gap: 16,
+    gap: 12,
   },
   card: {
     backgroundColor: colors.background.secondary,
     borderRadius: 14,
-    padding: 20,
-    gap: 8,
+    padding: 16,
+    gap: 6,
     borderWidth: 1,
     borderColor: colors.border.default,
   },
   cardLabel: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
     color: colors.text.primary,
   },
@@ -89,5 +103,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.text.secondary,
     lineHeight: 19,
+  },
+  footer: {
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+    borderTopWidth: 1,
+    borderTopColor: colors.border.default,
   },
 });
