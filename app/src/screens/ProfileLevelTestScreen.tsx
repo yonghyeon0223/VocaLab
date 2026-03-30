@@ -10,9 +10,11 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ProfileStackParamList } from '../navigation/RootNavigator';
-import { RatingValue } from '../../../shared/types';
+import { LevelRatings, RatingValue } from '../../../shared/types';
 import { useLevelTestStore } from '../stores/levelTestStore';
 import { fetchAllTestSentences } from '../services/sentenceService';
+import { updateProfile } from '../services/profileService';
+import { calculateLevels } from '../utils/levelCalculator';
 import { LEVEL_LABELS, RATING_OPTIONS, RATING_ORDER } from '../constants/levels';
 import { colors } from '../constants/colors';
 
@@ -21,16 +23,27 @@ type Props = {
 };
 
 export default function ProfileLevelTestScreen({ navigation }: Props) {
-  const { currentLevel, ratings, sentences, setCurrentLevel, setRating, setAllSentences } =
-    useLevelTestStore();
+  const {
+    currentLevel,
+    ratings,
+    sentences,
+    setCurrentLevel,
+    setRating,
+    setAllSentences,
+    clearRatingsFrom,
+    setAlienFrom,
+  } = useLevelTestStore();
 
   const [sentenceIndex, setSentenceIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState('');
+  // 번역은 기본적으로 숨긴다. 유저가 원할 때 탭해서 볼 수 있다.
+  const [showTranslation, setShowTranslation] = useState(false);
 
-  // 레벨이 바뀌면 문장 인덱스를 초기화한다.
+  // 레벨이 바뀌면 문장 인덱스와 번역 표시 상태를 초기화한다.
   useEffect(() => {
     setSentenceIndex(0);
+    setShowTranslation(false);
   }, [currentLevel]);
 
   // 아직 문장이 로드되지 않은 경우에만 fetch한다.
@@ -69,30 +82,64 @@ export default function ProfileLevelTestScreen({ navigation }: Props) {
     setSentenceIndex((prev) => (prev + 1) % currentSentences.length);
   }
 
+  // 이전 버튼: 이동할 레벨(currentLevel - 1)의 평가도 함께 초기화한다.
+  // 돌아간 화면에서 이전 선택이 남아있지 않고 다시 고를 수 있게 한다.
   function handlePrev() {
-    if (currentLevel > 1) setCurrentLevel(currentLevel - 1);
-  }
-
-  function handleNext() {
-    if (currentLevel < 10) setCurrentLevel(currentLevel + 1);
+    if (currentLevel <= 1) return;
+    clearRatingsFrom(currentLevel - 1);
+    setCurrentLevel(currentLevel - 1);
   }
 
   // 평가 선택 시 저장 후 다음 레벨로 자동 이동한다.
-  // lv.10이면 이동하지 않고 결과 보기 버튼이 활성화된다.
-  function handleRating(value: RatingValue) {
+  // "외계어예요" 선택 시 이후 모든 레벨을 alien으로 채우고 결과 화면으로 바로 이동한다.
+  // lv.10이면 레벨 계산 후 DB에 저장하고 결과 화면으로 이동한다.
+  async function handleRating(value: RatingValue) {
+    if (value === 'alien') {
+      // 현재 레벨부터 lv.10까지 전부 alien으로 처리한다.
+      // 이후 레벨을 하나씩 선택할 필요가 없으므로 바로 결과로 넘긴다.
+      setAlienFrom(currentLevel);
+      const updatedRatings: LevelRatings = { ...ratings };
+      for (let l = currentLevel; l <= 10; l++) {
+        updatedRatings[l] = 'alien';
+      }
+      const { easyLevel, activeLevel, hardLevel } = calculateLevels(updatedRatings);
+      try {
+        await updateProfile({
+          easyLevel,
+          activeLevel,
+          hardLevel,
+          levelRatings: updatedRatings as Record<string, string>,
+        });
+      } catch {
+        // 저장에 실패해도 결과는 볼 수 있게 계속 진행한다.
+      }
+      navigation.navigate('ProfileLevelResult');
+      return;
+    }
+
     setRating(currentLevel, value);
+
     if (currentLevel < 10) {
       setTimeout(() => setCurrentLevel(currentLevel + 1), 250);
+      return;
     }
-  }
 
-  // lv.10이 평가됐을 때만 결과 화면으로 이동할 수 있다.
-  function handleResult() {
+    // lv.10 평가 완료: store setRating이 비동기적으로 반영되기 전에
+    // 직접 병합한 ratings로 계산한다.
+    const updatedRatings: LevelRatings = { ...ratings, 10: value };
+    const { easyLevel, activeLevel, hardLevel } = calculateLevels(updatedRatings);
+    try {
+      await updateProfile({
+        easyLevel,
+        activeLevel,
+        hardLevel,
+        levelRatings: updatedRatings as Record<string, string>,
+      });
+    } catch {
+      // 저장에 실패해도 결과는 볼 수 있게 계속 진행한다.
+    }
     navigation.navigate('ProfileLevelResult');
   }
-
-  const isLastLevel = currentLevel === 10;
-  const canShowResult = isLastLevel && ratings[10] !== undefined;
 
   if (loading) {
     return (
@@ -116,14 +163,14 @@ export default function ProfileLevelTestScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      {/* 레벨 헤더: 번호를 작게, 레이블을 크게 표시해 단계를 직관적으로 나타낸다 */}
+      {/* 레벨 헤더 */}
       <View style={styles.header}>
         <View style={styles.levelInfo}>
           <Text style={styles.levelNumber}>lv.{currentLevel}</Text>
           <Text style={styles.levelLabel}>{LEVEL_LABELS[currentLevel]}</Text>
         </View>
 
-        {/* 진행 바: 10개 세그먼트 */}
+        {/* 진행 바: 현재 레벨 세그먼트만 높이를 키워 위치를 직관적으로 표시한다 */}
         <View style={styles.progressRow}>
           {Array.from({ length: 10 }, (_, i) => {
             const lv = i + 1;
@@ -135,9 +182,17 @@ export default function ProfileLevelTestScreen({ navigation }: Props) {
             return (
               <TouchableOpacity
                 key={lv}
-                style={[styles.segment, { backgroundColor: segColor }]}
+                style={styles.segmentWrapper}
                 onPress={() => setCurrentLevel(lv)}
-              />
+                activeOpacity={0.7}
+              >
+                <View
+                  style={[
+                    styles.segment,
+                    { backgroundColor: segColor, height: isCurrent ? 8 : 4 },
+                  ]}
+                />
+              </TouchableOpacity>
             );
           })}
         </View>
@@ -145,21 +200,36 @@ export default function ProfileLevelTestScreen({ navigation }: Props) {
 
       <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
         {/* 문장 카드
-            하단 row에 번역과 다음 예문 아이콘을 나란히 배치한다.
-            여러 예문이 있을 때만 아이콘이 나타난다. */}
+            여러 예문이 있을 때만 reload 아이콘이 나타난다. */}
         {currentSentence ? (
           <View style={styles.sentenceCard}>
-            {/* 영어 문장 옆에 reload 아이콘을 배치해 다른 예문으로 교체할 수 있음을 직관적으로 표현한다 */}
-            <View style={styles.sentenceRow}>
-              <Text style={styles.sentenceText}>{currentSentence.text}</Text>
+            {/* 영어 문장은 reload 아이콘 없이 전체 너비로 표시한다 */}
+            <Text style={styles.sentenceText}>{currentSentence.text}</Text>
+            <View style={styles.divider} />
+            {/* 뜻 보기/번역과 다른 문장 버튼을 같은 row에 배치한다
+                번역이 전체 너비를 사용하고 reload는 오른쪽 끝에 붙는다 */}
+            <View style={styles.bottomRow}>
+              <View style={styles.translationWrapper}>
+                {showTranslation ? (
+                  <TouchableOpacity onPress={() => setShowTranslation(false)} activeOpacity={0.7}>
+                    <Text style={styles.translationText}>{currentSentence.translation}</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity onPress={() => setShowTranslation(true)} activeOpacity={0.7}>
+                    <Text style={styles.showTranslationText}>뜻 보기</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
               {currentSentences.length > 1 && (
-                <TouchableOpacity onPress={handleCycleSentence} hitSlop={12}>
-                  <Ionicons name="refresh-outline" size={18} color={colors.accent} />
+                <TouchableOpacity
+                  onPress={handleCycleSentence}
+                  hitSlop={8}
+                  style={styles.cycleButton}
+                >
+                  <Text style={styles.cycleButtonText}>다른 예문 보기</Text>
                 </TouchableOpacity>
               )}
             </View>
-            <View style={styles.divider} />
-            <Text style={styles.translationText}>{currentSentence.translation}</Text>
           </View>
         ) : (
           <View style={styles.sentenceCard}>
@@ -200,38 +270,30 @@ export default function ProfileLevelTestScreen({ navigation }: Props) {
             );
           })}
         </View>
-      </ScrollView>
 
-      {/* 하단 네비게이션
-          이전/다음/결과 보기 모두 동일한 버튼 스타일을 사용한다.
-          다음은 현재 레벨을 평가했을 때만 활성화된다. */}
-      <View style={styles.nav}>
+        {/* 이전 버튼: 외계어예요 버튼 바로 아래, 평가 버튼과 같은 시야에 배치한다 */}
         <TouchableOpacity
-          style={[styles.navButton, currentLevel === 1 && styles.navButtonDisabled]}
+          style={[styles.prevButton, currentLevel === 1 && styles.prevButtonDisabled]}
           onPress={handlePrev}
           disabled={currentLevel === 1}
+          hitSlop={8}
         >
-          <Text style={styles.navButtonText}>이전</Text>
+          <Ionicons
+            name="chevron-back"
+            size={16}
+            color={currentLevel === 1 ? colors.text.disabled : colors.text.secondary}
+          />
+          <Text
+            style={[
+              styles.prevButtonText,
+              currentLevel === 1 && styles.prevButtonTextDisabled,
+            ]}
+          >
+            이전
+          </Text>
         </TouchableOpacity>
+      </ScrollView>
 
-        {isLastLevel ? (
-          <TouchableOpacity
-            style={[styles.navButton, !canShowResult && styles.navButtonDisabled]}
-            onPress={handleResult}
-            disabled={!canShowResult}
-          >
-            <Text style={styles.navButtonText}>결과 보기</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            style={[styles.navButton, !currentRating && styles.navButtonDisabled]}
-            onPress={handleNext}
-            disabled={!currentRating}
-          >
-            <Text style={styles.navButtonText}>다음</Text>
-          </TouchableOpacity>
-        )}
-      </View>
     </View>
   );
 }
@@ -259,7 +321,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   levelNumber: {
-    fontSize: 12,
+    fontSize: 15,
     fontWeight: '500',
     color: colors.accent,
     letterSpacing: 0.5,
@@ -271,11 +333,15 @@ const styles = StyleSheet.create({
   },
   progressRow: {
     flexDirection: 'row',
+    alignItems: 'flex-end',
     gap: 5,
   },
-  segment: {
+  segmentWrapper: {
     flex: 1,
-    height: 4,
+    height: 8,
+    justifyContent: 'flex-end',
+  },
+  segment: {
     borderRadius: 2,
   },
   body: {
@@ -289,6 +355,28 @@ const styles = StyleSheet.create({
     padding: 20,
     gap: 14,
   },
+  // 뜻 보기/번역과 다른 문장 버튼을 한 row에 배치한다.
+  bottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  translationWrapper: {
+    flex: 1,
+  },
+  cycleButton: {
+    alignSelf: 'flex-start',
+  },
+  cycleButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.accent,
+  },
+  sentenceRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
   sentenceText: {
     flex: 1,
     fontSize: 16,
@@ -300,16 +388,15 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: colors.border.default,
   },
-  // 영어 문장과 reload 아이콘을 한 row에 배치한다.
-  sentenceRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-  },
   translationText: {
-    fontSize: 14,
+    fontSize: 16,
     color: colors.text.secondary,
-    lineHeight: 22,
+    lineHeight: 24,
+  },
+  showTranslationText: {
+    fontSize: 14,
+    color: colors.accent,
+    fontWeight: '500',
   },
   ratingButtons: {
     gap: 10,
@@ -327,6 +414,25 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   ratingButtonTextDisabled: {
+    color: colors.text.disabled,
+  },
+  prevButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 2,
+    paddingVertical: 4,
+    paddingRight: 8,
+  },
+  prevButtonDisabled: {
+    opacity: 0.3,
+  },
+  prevButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.text.secondary,
+  },
+  prevButtonTextDisabled: {
     color: colors.text.disabled,
   },
   loadingText: {
@@ -350,29 +456,5 @@ const styles = StyleSheet.create({
     color: colors.accent,
     fontSize: 14,
     fontWeight: '500',
-  },
-  nav: {
-    flexDirection: 'row',
-    paddingHorizontal: 24,
-    paddingVertical: 20,
-    gap: 12,
-    borderTopWidth: 1,
-    borderTopColor: colors.border.default,
-  },
-  navButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border.default,
-    alignItems: 'center',
-  },
-  navButtonDisabled: {
-    opacity: 0.3,
-  },
-  navButtonText: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: colors.text.primary,
   },
 });

@@ -29,7 +29,19 @@ export default function SignupScreen({ navigation }: Props) {
     const next: typeof errors = {};
 
     if (!email) next.email = '이메일을 입력해주세요';
-    if (!password) next.password = '비밀번호를 입력해주세요';
+
+    // 서버(authValidator.verifyEmailSchema)와 동일한 비밀번호 규칙.
+    // 여기서 걸러야 인증 코드 화면에서 엉뚱한 에러가 뜨지 않는다.
+    if (!password) {
+      next.password = '비밀번호를 입력해주세요';
+    } else if (password.length < 8) {
+      next.password = '비밀번호는 최소 8자 이상이어야 합니다';
+    } else if (!/[A-Za-z]/.test(password)) {
+      next.password = '영문자를 포함해야 합니다';
+    } else if (!/[0-9]/.test(password)) {
+      next.password = '숫자를 포함해야 합니다';
+    }
+
     if (password && passwordConfirm && password !== passwordConfirm) {
       next.passwordConfirm = '비밀번호가 일치하지 않습니다';
     }

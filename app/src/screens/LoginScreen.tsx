@@ -78,11 +78,17 @@ export default function LoginScreen({ navigation }: Props) {
           <Button label={loading ? '로그인 중...' : '로그인'} onPress={handleLogin} disabled={loading} />
         </View>
 
-        <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
-          <Text style={styles.link}>
-            계정이 없으신가요? <Text style={styles.linkAccent}>회원가입</Text>
-          </Text>
-        </TouchableOpacity>
+        {/* 회원가입 링크: 안내 문구와 버튼을 분리해 찾기 쉽게 한다 */}
+        <View style={styles.signupRow}>
+          <Text style={styles.signupPrompt}>아직 계정이 없으신가요?</Text>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Signup')}
+            style={styles.signupButton}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.signupButtonText}>회원가입</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -111,7 +117,7 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   subtitle: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '400',
     color: colors.text.secondary,
   },
@@ -120,16 +126,28 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   error: {
-    fontSize: 13,
+    fontSize: 14,
     color: colors.error,
     textAlign: 'center',
   },
-  link: {
-    fontSize: 13,
+  signupRow: {
+    alignItems: 'center',
+    gap: 10,
+  },
+  signupPrompt: {
+    fontSize: 14,
     color: colors.text.secondary,
   },
-  linkAccent: {
+  signupButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 28,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: colors.accent,
+  },
+  signupButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
     color: colors.accent,
-    fontWeight: '500',
   },
 });

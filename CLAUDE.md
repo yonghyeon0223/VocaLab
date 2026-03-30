@@ -169,6 +169,181 @@ type PendingVerification = {
 
 ---
 
+### Sprint 03 — 프로필 설정 시스템
+
+#### 프로필 설정 플로우
+
+6개 화면이 순서대로 이어지는 단방향 플로우. 완료 후 메인 앱으로 전환된다.
+
+```
+ProfileNickname → ProfileLevelIntro → ProfileLevelTest → ProfileLevelResult → ProfilePurpose → ProfileComplete
+```
+
+#### DB 엔티티
+
+**`Profile`** (`profiles` 컬렉션 — 유저 1명당 1개)
+```typescript
+type Profile = {
+  _id: ObjectId;
+  userId: ObjectId;       // users 컬렉션 참조
+  nickname: string;
+  easyLevel: number;      // 1~10, 처음 만날 때 구간
+  activeLevel: number;    // 1~10, 실전 적용 구간
+  hardLevel: number;      // 1~10, 심화 구간
+  levelRatings: Record<string, string>; // { "1": "easy", "2": "appropriate", ... }
+  purposes: string[];     // 선택한 학습 목적 태그
+  profileCompleted: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+#### 난이도 평가 시스템
+
+**평가값 (RatingValue)**
+
+| 값 | 한국어 레이블 | 색상 | 의미 |
+|----|-------------|------|------|
+| `'easy'` | 바로 이해돼요 | `#4caf7d` | 너무 쉬움 |
+| `'appropriate'` | 조금 생각하면 돼요 | `#6c63ff` | 적정 수준 |
+| `'hard'` | 뜻 파악이 힘들어요 | `#e8a838` | 어려움 |
+| `'alien'` | 외계어예요 | `#e05252` | 전혀 모름 |
+
+**레벨 라벨 (LEVEL_LABELS)**
+
+lv.1~10에 대응하는 텍스트. `app/src/constants/levels.ts`에 정의.
+
+**레벨 계산 규칙 (`calculateLevels`)**
+
+| 결과 필드 | 계산 방식 |
+|----------|----------|
+| `easyLevel` | `easy` 평가 중 가장 높은 레벨 (없으면 1) |
+| `hardLevel` | `hard` 또는 `alien` 평가 중 가장 낮은 레벨 (없으면 10) |
+| `activeLevel` | `appropriate` 평가들의 중간값; appropriate 없으면 easyLevel~hardLevel 중간 |
+
+**구간 색상 (학습 구간 시각화)**
+
+| 구간 | 레이블 | 색상 |
+|------|--------|------|
+| easyLevel | 처음 만날 때 | `#4caf7d` |
+| activeLevel | 실전 적용 | `#6c63ff` |
+| hardLevel | 심화 | `#e8a838` |
+
+이 색상은 ProfileLevelIntroScreen 카드, ProfileLevelResultScreen 차트, ProfileCompleteScreen 레벨 카드에 일관 적용.
+
+#### 핵심 UX 규칙
+
+- **alien 자동 완성**: lv.N에서 `외계어예요` 선택 시 lv.N~10 전부 alien으로 처리 → DB 저장 → 결과 화면 이동
+- **자동 전진**: 평가 선택 후 250ms 대기 → 다음 레벨 자동 이동 (lv.10/alien 제외)
+- **이전 이동 시 초기화**: `clearRatingsFrom(currentLevel - 1)` — 이동할 레벨 포함 이후 전부 초기화
+- **순방향 강제 초기화**: 어떤 레벨에서 평가를 선택하든 그 이후 레벨 평가는 모두 즉시 초기화 (`setRating` 내부 로직)
+- **DB 저장 시점**: 결과 화면이 아닌 테스트 화면 (lv.10 완료 또는 alien 선택 시점)
+- **번역 기본 숨김**: 레벨 이동 시마다 번역 표시 상태 초기화
+- **로그아웃 시 store 초기화**: `authService.logout` 및 Axios 인터셉터 토큰 갱신 실패 시 `levelTestStore.reset()` 호출 — 다른 유저 로그인 시 이전 테스트 결과가 남지 않도록
+
+#### 글로벌 디자인 규칙 (Sprint 03 확립, semi-permanent)
+
+| 규칙 | 값 |
+|------|----|
+| 최소 폰트 사이즈 | **14px** (모든 텍스트) |
+| 부제목(subtitle) 폰트 | **17px** |
+| 카드 설명(cardDescription) 폰트 | **15px** |
+| 버튼 스타일 | border 없음 — 선택: solid fill, 미선택: `color+'22'` tint |
+| progress bar 현재 위치 | 높이 차이로 강조 (현재 height 8, 나머지 height 4) |
+
+#### profileStore 필드
+
+```typescript
+// app/src/stores/profileStore.ts
+type ProfileState = {
+  nickname: string;
+  easyLevel: number;
+  activeLevel: number;
+  hardLevel: number;
+  purposes: string[];
+  profileCompleted: boolean;
+  // ...setters
+}
+```
+
+#### 구현된 엔드포인트
+
+| 메서드 | 경로 | 인증 | 설명 |
+|--------|------|------|------|
+| GET | `/api/profile` | Bearer | 내 프로필 조회 |
+| POST | `/api/profile` | Bearer | 프로필 최초 생성 |
+| PUT | `/api/profile` | Bearer | 레벨/목적 등 업데이트 |
+| POST | `/api/profile/complete` | Bearer | profileCompleted: true 설정 |
+
+---
+
+## 📐 기술 참고 (Sprint 03까지 축적)
+
+> **이 섹션은 참고용이며, 반드시 따라야 하는 규칙이 아닙니다.**
+> 이전 스프린트에서 내린 기술적 결정의 맥락을 보존하기 위해 기록합니다.
+> 새로운 스프린트에서 더 나은 접근이 있으면 자유롭게 변경할 수 있습니다.
+
+### Zustand Store 패턴
+
+| Store | 용도 | 영속성 |
+|-------|------|--------|
+| `authStore` | accessToken, isAuthenticated | 메모리 (앱 종료 시 소멸) |
+| `signupStore` | 회원가입 중 임시 이메일/비밀번호 | 메모리 |
+| `profileStore` | nickname, levels, purposes, profileCompleted | 메모리 (서버와 동기화) |
+| `levelTestStore` | currentLevel, ratings, sentences | 메모리 |
+
+- `signupStore`는 AsyncStorage에 저장하지 않음. 앱 종료 = 처음부터.
+- `levelTestStore`는 로그아웃 시 `reset()` 호출해서 유저 간 데이터 오염 방지.
+- `profileStore`는 로그아웃 시 `clearProfile()` 호출.
+
+### Axios 인터셉터 (Token Refresh)
+
+```
+요청 → 401 응답 → refreshToken 있으면 재발급 시도 → 성공: 원래 요청 재시도
+                                                 → 실패: 토큰 삭제, store 초기화, 로그인 화면
+```
+`_retry` 플래그로 무한 루프 방지.
+
+### levelTestStore 상태 전이
+
+```
+setRating(level, rating)
+  → 이후 레벨(level+1 ~ 10) 평가 무조건 삭제
+  → 역전 방지는 UI 레벨(isButtonDisabled)에서만 처리
+
+setAlienFrom(level)
+  → level ~ 10 전부 'alien'으로 일괄 설정
+  → 화면 레벨에서 calculateLevels + updateProfile + navigate
+
+clearRatingsFrom(level)
+  → level ~ 10 평가 삭제
+  → 이전 버튼에서 호출 (이동할 레벨 포함)
+```
+
+### Safe Area Insets
+
+`react-native-safe-area-context`의 `useSafeAreaInsets()` 사용.
+- 홈 인디케이터/내비게이션 바와 겹치는 하단 요소에 `paddingBottom: Math.max(insets.bottom, 16)` 적용.
+- 상단은 대부분 `paddingTop: 60` 등 고정값으로 처리.
+
+### PanResponder와 ScrollView 비호환
+
+PanResponder의 JS 레벨 제스처 캡처는 ScrollView의 네이티브 제스처와 충돌한다.
+- `onMoveShouldSetPanResponderCapture`를 써도 ScrollView가 선점.
+- 스와이프가 필요하면 ScrollView를 제거하거나 `react-native-gesture-handler` 사용 권장.
+- Sprint 03에서 스와이프 대신 이전 버튼으로 결정.
+
+### DB 저장 시점 패턴 (프로필 설정)
+
+| 화면 | 시점 | 저장 필드 |
+|------|------|----------|
+| 닉네임 | "다음" 버튼 | `nickname` |
+| 테스트 | lv.10 완료 또는 alien 선택 | `easyLevel`, `activeLevel`, `hardLevel`, `levelRatings` |
+| 학습 목적 | "다음" 버튼 | `purposes` |
+| 완료 | "첫 단어 세트 만들기" | `profileCompleted: true` |
+
+결과 화면(ProfileLevelResult)에서는 저장하지 않음 — 이미 테스트 화면에서 완료.
+
 ---
 
 ## ✍️ 코딩 컨벤션
@@ -397,6 +572,72 @@ const wordSets = useWordSetStore((s) => s.wordSets);
 - 승인 없이 구현 시작
 - 스프린트 범위 밖 기능 선구현
 - `console.log` 디버깅 코드 커밋
+- **클라이언트-서버 검증 규칙 불일치**: 서버(Zod 스키마)에 검증 규칙이 있으면, 해당 요청을 보내는 클라이언트 화면에도 **동일한 규칙을 반드시 먼저** 적용할 것. 서버 에러 메시지가 엉뚱한 화면에서 노출되는 사고를 방지한다. (예: 회원가입 비밀번호 규칙이 인증 코드 화면에서 표시되는 버그 — Sprint 03에서 발견·수정)
+
+---
+
+## 📐 기술 참고 (Sprint 01~03 축적)
+
+> **주의**: 이 섹션은 현재까지의 구현 방식을 정리한 **참고용 기록**이다.
+> must-follow 규칙이 아니며, 이후 스프린트에서 더 나은 방식이 있으면 교체해도 된다.
+> 코드베이스 실제 상태가 항상 이 문서보다 우선한다.
+
+---
+
+### Zustand 스토어 패턴
+
+- 스토어 파일은 `app/src/stores/` 아래 `camelCase.ts`로 생성
+- 상태 타입은 파일 상단에 `type XxxState = { ... }` 형태로 정의 (인터페이스 대신 type)
+- `create<XxxState>((set, get) => ({ ... }))` 형태 사용
+- 비동기 로직은 스토어 밖(service 레이어)에서 처리 후 결과만 스토어에 set
+- 다른 서비스/파일에서 스토어 값을 직접 읽어야 할 때: `useXxxStore.getState().field`
+
+### 세션 간 스토어 오염 방지
+
+- `authService.logout()`, `api.ts` 토큰 재발급 실패 경로 양쪽에 `store.reset()` 호출
+- 프로필 설정처럼 플로우가 있는 스토어는 반드시 `reset()` 액션을 구현해둘 것
+- 이유: 이전 사용자의 미완료 상태가 다음 로그인 세션에 남아있을 수 있음
+
+### Safe Area 처리
+
+- `react-native-safe-area-context`의 `useSafeAreaInsets()` 사용
+- 하단 홈 인디케이터/내비게이션 바 침범 방지: `paddingBottom: insets.bottom + N`
+- 화면 레벨 컴포넌트의 ScrollView `contentContainerStyle`에 적용
+- 고정 footer가 있는 경우 footer View에 `paddingBottom: insets.bottom` 적용
+
+### PanResponder + ScrollView 한계
+
+- `PanResponder`는 JS 레벨 제스처 핸들러 — ScrollView의 네이티브 제스처와 충돌
+- 수평 스와이프 네비게이션을 ScrollView 안에서 구현하면 동작하지 않음
+- 대안: React Navigation의 네이티브 스택 제스처(iOS 엣지 스와이프), 별도 Gesture Handler 라이브러리
+- Sprint 03 결론: 스와이프 제거, 이전 버튼으로 대체
+
+### 레벨 테스트 상태 머신
+
+```
+초기: currentLevel=1, ratings={}
+
+선택 → setRating(level, value) → 이후 레벨 전부 삭제
+     → currentLevel < 10: setTimeout 250ms → setCurrentLevel(level+1)
+     → alien 선택: setAlienFrom(level) → DB 저장 → navigate('Result')
+     → level === 10: DB 저장 → navigate('Result')
+
+이전 → clearRatingsFrom(currentLevel - 1) → setCurrentLevel(level-1)
+```
+
+### DB 저장 타이밍 패턴
+
+- 결과/완료 화면의 "다음" 버튼이 아닌, **실제 데이터가 확정되는 시점**에 저장
+- 이유: "다음"을 누르지 않고 앱을 닫아도 데이터가 보존됨
+- ProfileLevelTest: lv.10 완료 또는 alien 선택 → 즉시 `updateProfile()` 호출
+- `updateProfile` 실패해도 UX는 계속 진행 (결과는 store에 있으므로 화면 표시 가능)
+
+### Axios 인터셉터 구조 (`app/src/services/api.ts`)
+
+- 요청 인터셉터: `accessToken`을 `Authorization: Bearer` 헤더에 자동 첨부
+- 응답 인터셉터: 401 수신 시 `/api/auth/refresh` 호출 → 성공 시 원래 요청 재시도
+- 재발급 실패 시: `authStore.logout()` + `levelTestStore.reset()` + `profileStore.reset()` 호출
+- 재발급 요청 중 추가 401이 들어오면 큐에 쌓아두고 재발급 완료 후 일괄 처리
 
 ---
 

@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   label: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '400',
     color: colors.text.secondary,
   },
@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   error: {
-    fontSize: 11,
+    fontSize: 14,
     color: colors.error,
   },
 });

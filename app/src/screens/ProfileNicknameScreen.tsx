@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   counter: {
-    fontSize: 12,
+    fontSize: 14,
     color: colors.text.secondary,
     textAlign: 'right',
   },

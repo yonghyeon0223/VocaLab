@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { useAuthStore } from '../stores/authStore';
+import { useLevelTestStore } from '../stores/levelTestStore';
 
 const REFRESH_TOKEN_KEY = 'refreshToken';
 
@@ -58,6 +59,7 @@ api.interceptors.response.use(
         // 재발급도 실패하면 두 토큰을 모두 지우고 로그인 화면으로 보낸다.
         await AsyncStorage.removeItem(REFRESH_TOKEN_KEY);
         useAuthStore.getState().clearAuth();
+        useLevelTestStore.getState().reset();
         return Promise.reject(error);
       }
     }

@@ -84,8 +84,7 @@ export default function ProfilePurposeScreen({ navigation }: Props) {
         {/* 헤더 */}
         <View style={styles.titleBlock}>
           <Text style={styles.title}>어떤 영어를{'\n'}배우고 싶어요?</Text>
-          <Text style={styles.subtitle}>최대 5개까지 고를 수 있어요.</Text>
-          <Text style={styles.hint}>선택한 목적에 맞는 예문이 더 자주 출제돼요.</Text>
+          <Text style={styles.subtitle}>선택한 목적에 맞는 예문이 더 자주 출제돼요.</Text>
         </View>
 
         {/* 선택 카운터 */}
@@ -170,19 +169,19 @@ const styles = StyleSheet.create({
     lineHeight: 40,
   },
   subtitle: {
-    fontSize: 15,
+    fontSize: 17,
     color: colors.text.secondary,
     marginTop: 4,
   },
   hint: {
-    fontSize: 12,
+    fontSize: 14,
     color: colors.text.disabled,
   },
   counterRow: {
     alignItems: 'flex-end',
   },
   counterText: {
-    fontSize: 13,
+    fontSize: 14,
     color: colors.text.secondary,
   },
   counterNum: {
@@ -196,7 +195,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   groupLabel: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '600',
     color: colors.text.secondary,
     letterSpacing: 0.5,
@@ -224,7 +223,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background.primary,
   },
   chipText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
     color: colors.text.secondary,
   },
@@ -236,7 +235,7 @@ const styles = StyleSheet.create({
     color: colors.text.disabled,
   },
   error: {
-    fontSize: 13,
+    fontSize: 14,
     color: colors.error,
     textAlign: 'center',
   },

@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuthStore } from '../stores/authStore';
 import { useProfileStore } from '../stores/profileStore';
+import { useLevelTestStore } from '../stores/levelTestStore';
 import api, { ASYNC_STORAGE_KEYS } from './api';
 
 // 회원가입 1단계 — 이메일만 전송해 중복 확인 + 인증 코드 발송을 요청한다.
@@ -74,5 +75,6 @@ export async function logout() {
     await AsyncStorage.removeItem(ASYNC_STORAGE_KEYS.REFRESH_TOKEN);
     useAuthStore.getState().clearAuth();
     useProfileStore.getState().clearProfile();
+    useLevelTestStore.getState().reset();
   }
 }

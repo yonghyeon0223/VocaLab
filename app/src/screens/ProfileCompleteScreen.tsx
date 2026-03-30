@@ -13,9 +13,9 @@ type Props = {
 
 // 결과 카드에 표시할 구간 레이블과 store 키 매핑
 const LEVEL_CARDS = [
-  { label: '처음 만날 때', key: 'easyLevel' as const },
-  { label: '실전 적용',    key: 'activeLevel' as const },
-  { label: '심화',         key: 'hardLevel' as const },
+  { label: '처음 만날 때', key: 'easyLevel' as const,  color: '#4caf7d' },
+  { label: '실전 적용',    key: 'activeLevel' as const, color: '#6c63ff' },
+  { label: '심화',         key: 'hardLevel' as const,   color: '#e8a838' },
 ];
 
 export default function ProfileCompleteScreen({ navigation }: Props) {
@@ -54,7 +54,7 @@ export default function ProfileCompleteScreen({ navigation }: Props) {
         </View>
 
         {/* 타이틀 */}
-        <Text style={styles.title}>다 됐어요,{'\n'}{nickname}님!</Text>
+        <Text style={styles.title}>{nickname}님,{'\n'}프로필 설정을 완료했어요</Text>
 
         {/* 학습 목적 태그 */}
         {purposes.length > 0 && (
@@ -74,12 +74,12 @@ export default function ProfileCompleteScreen({ navigation }: Props) {
         <View style={styles.levelSection}>
           <Text style={styles.sectionLabel}>권장 학습 난이도</Text>
           <View style={styles.levelCards}>
-            {LEVEL_CARDS.map(({ label, key }) => {
+            {LEVEL_CARDS.map(({ label, key, color }) => {
               const lv = levels[key];
               return (
                 <View key={key} style={styles.levelCard}>
                   <Text style={styles.levelCardLabel}>{label}</Text>
-                  <Text style={styles.levelCardValue}>
+                  <Text style={[styles.levelCardValue, { color }]}>
                     lv.{lv}
                     <Text style={styles.levelCardSub}> — {LEVEL_LABELS[lv] ?? ''}</Text>
                   </Text>
@@ -88,11 +88,6 @@ export default function ProfileCompleteScreen({ navigation }: Props) {
             })}
           </View>
         </View>
-
-        {/* 안내 문구 */}
-        <Text style={styles.hint}>
-          프로필에서 난이도를 직접 조정하거나{'\n'}테스트를 다시 받을 수 있어요.
-        </Text>
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
       </ScrollView>
@@ -108,15 +103,6 @@ export default function ProfileCompleteScreen({ navigation }: Props) {
           <Text style={styles.primaryButtonText}>
             {loading ? '저장 중...' : '첫 단어 세트 만들기'}
           </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.secondaryButton, loading && styles.buttonDisabled]}
-          onPress={handleComplete}
-          disabled={loading}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.secondaryButtonText}>나중에 할게요</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -161,7 +147,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   sectionLabel: {
-    fontSize: 11,
+    fontSize: 14,
     fontWeight: '600',
     color: colors.text.secondary,
     letterSpacing: 0.5,
@@ -185,7 +171,7 @@ const styles = StyleSheet.create({
     borderColor: colors.accent + '4d',
   },
   purposeChipText: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '500',
     color: colors.accent,
   },
@@ -204,7 +190,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   levelCardLabel: {
-    fontSize: 11,
+    fontSize: 14,
     color: colors.text.secondary,
     fontWeight: '500',
   },
@@ -214,18 +200,12 @@ const styles = StyleSheet.create({
     color: colors.accent,
   },
   levelCardSub: {
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: '400',
     color: colors.text.primary,
   },
-  hint: {
-    fontSize: 12,
-    color: colors.text.disabled,
-    textAlign: 'center',
-    lineHeight: 18,
-  },
   error: {
-    fontSize: 13,
+    fontSize: 15,
     color: colors.error,
     textAlign: 'center',
   },
@@ -246,14 +226,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: '#fff',
-  },
-  secondaryButton: {
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  secondaryButtonText: {
-    fontSize: 14,
-    color: colors.text.secondary,
   },
   buttonDisabled: {
     opacity: 0.4,

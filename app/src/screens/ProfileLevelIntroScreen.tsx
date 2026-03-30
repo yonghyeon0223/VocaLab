@@ -1,4 +1,5 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button from '../components/ui/Button';
 import { colors } from '../constants/colors';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -29,16 +30,21 @@ const CARDS = [
 ];
 
 export default function ProfileLevelIntroScreen({ navigation }: Props) {
+  const insets = useSafeAreaInsets();
+
   return (
     <View style={styles.container}>
       <ScrollView
-        contentContainerStyle={styles.body}
+        contentContainerStyle={[
+          styles.body,
+          { paddingBottom: Math.max(insets.bottom, 24) + 16 },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Text style={styles.title}>단어를 외워도{'\n'}막상 쓸 때 생각이 안 나죠?</Text>
+          <Text style={styles.title}>내 수준에 맞는{'\n'}예문을 알아볼게요</Text>
           <Text style={styles.subtitle}>
-            읽고, 듣고, 말하고, 쓰면서{'\n'}문맥 속에서 익힌 단어는 달라요.
+            VocaLab은 예문을 읽고 듣고 말하고 쓰면서{'\n'}단어를 완전히 체화하도록 설계됐어요.
           </Text>
         </View>
 
@@ -54,14 +60,13 @@ export default function ProfileLevelIntroScreen({ navigation }: Props) {
             </View>
           ))}
         </View>
-      </ScrollView>
 
-      <View style={styles.footer}>
+        {/* 카드 바로 아래에 버튼을 배치해 설명을 읽은 뒤 자연스럽게 이어지게 한다 */}
         <Button
           label="문장 보러 가기"
           onPress={() => navigation.navigate('ProfileLevelTest')}
         />
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -74,8 +79,7 @@ const styles = StyleSheet.create({
   body: {
     paddingHorizontal: 24,
     paddingTop: 64,
-    paddingBottom: 24,
-    gap: 36,
+    gap: 28,
   },
   header: {
     gap: 12,
@@ -87,9 +91,9 @@ const styles = StyleSheet.create({
     lineHeight: 40,
   },
   subtitle: {
-    fontSize: 15,
+    fontSize: 17,
     color: colors.text.secondary,
-    lineHeight: 23,
+    lineHeight: 25,
   },
   cards: {
     gap: 12,
@@ -105,14 +109,8 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   cardDescription: {
-    fontSize: 13,
+    fontSize: 15,
     color: colors.text.secondary,
-    lineHeight: 19,
-  },
-  footer: {
-    paddingHorizontal: 24,
-    paddingVertical: 20,
-    borderTopWidth: 1,
-    borderTopColor: colors.border.default,
+    lineHeight: 21,
   },
 });
