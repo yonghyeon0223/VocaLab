@@ -207,31 +207,33 @@ export default function ProfileLevelTestScreen({ navigation }: Props) {
         </View>
       </ScrollView>
 
-      {/* 하단 네비게이션 */}
+      {/* 하단 네비게이션
+          이전/다음/결과 보기 모두 동일한 버튼 스타일을 사용한다.
+          다음은 현재 레벨을 평가했을 때만 활성화된다. */}
       <View style={styles.nav}>
         <TouchableOpacity
           style={[styles.navButton, currentLevel === 1 && styles.navButtonDisabled]}
           onPress={handlePrev}
           disabled={currentLevel === 1}
         >
-          <Text style={[styles.navButtonText, currentLevel === 1 && styles.navButtonTextDisabled]}>
-            이전
-          </Text>
+          <Text style={styles.navButtonText}>이전</Text>
         </TouchableOpacity>
 
         {isLastLevel ? (
           <TouchableOpacity
-            style={[styles.navButtonPrimary, !canShowResult && styles.navButtonDisabled]}
+            style={[styles.navButton, !canShowResult && styles.navButtonDisabled]}
             onPress={handleResult}
             disabled={!canShowResult}
           >
-            <Text style={[styles.navButtonPrimaryText, !canShowResult && styles.navButtonTextDisabled]}>
-              결과 보기
-            </Text>
+            <Text style={styles.navButtonText}>결과 보기</Text>
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity style={styles.navButtonPrimary} onPress={handleNext}>
-            <Text style={styles.navButtonPrimaryText}>다음</Text>
+          <TouchableOpacity
+            style={[styles.navButton, !currentRating && styles.navButtonDisabled]}
+            onPress={handleNext}
+            disabled={!currentRating}
+          >
+            <Text style={styles.navButtonText}>다음</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -370,27 +372,12 @@ const styles = StyleSheet.create({
     borderColor: colors.border.default,
     alignItems: 'center',
   },
-  navButtonPrimary: {
-    flex: 2,
-    paddingVertical: 14,
-    borderRadius: 12,
-    backgroundColor: colors.accent,
-    alignItems: 'center',
-  },
   navButtonDisabled: {
-    opacity: 0.35,
+    opacity: 0.3,
   },
   navButtonText: {
     fontSize: 15,
     fontWeight: '500',
     color: colors.text.primary,
-  },
-  navButtonPrimaryText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  navButtonTextDisabled: {
-    color: colors.text.disabled,
   },
 });
