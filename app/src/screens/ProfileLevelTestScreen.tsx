@@ -216,7 +216,7 @@ export default function ProfileLevelTestScreen({ navigation }: Props) {
                   </TouchableOpacity>
                 ) : (
                   <TouchableOpacity onPress={() => setShowTranslation(true)} activeOpacity={0.7}>
-                    <Text style={styles.showTranslationText}>뜻 보기</Text>
+                    <Text style={styles.actionText}>뜻 보기</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -226,7 +226,7 @@ export default function ProfileLevelTestScreen({ navigation }: Props) {
                   hitSlop={8}
                   style={styles.cycleButton}
                 >
-                  <Text style={styles.cycleButtonText}>다른 예문 보기</Text>
+                  <Text style={styles.actionText}>다른 예문 보기</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -367,7 +367,9 @@ const styles = StyleSheet.create({
   cycleButton: {
     alignSelf: 'flex-start',
   },
-  cycleButtonText: {
+  // "뜻 보기"와 "다른 예문 보기" 두 텍스트가 나란히 표시되므로
+  // 동일한 스타일을 공유한다. 별도 스타일 대신 actionText 하나로 통일.
+  actionText: {
     fontSize: 14,
     fontWeight: '500',
     color: colors.accent,
@@ -392,11 +394,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.text.secondary,
     lineHeight: 24,
-  },
-  showTranslationText: {
-    fontSize: 14,
-    color: colors.accent,
-    fontWeight: '500',
   },
   ratingButtons: {
     gap: 10,
