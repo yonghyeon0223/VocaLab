@@ -74,8 +74,15 @@ export default function ProfileLevelTestScreen({ navigation }: Props) {
   }
 
   function handleNext() {
+    if (currentLevel < 10) setCurrentLevel(currentLevel + 1);
+  }
+
+  // 평가 선택 시 저장 후 다음 레벨로 자동 이동한다.
+  // lv.10이면 이동하지 않고 결과 보기 버튼이 활성화된다.
+  function handleRating(value: RatingValue) {
+    setRating(currentLevel, value);
     if (currentLevel < 10) {
-      setCurrentLevel(currentLevel + 1);
+      setTimeout(() => setCurrentLevel(currentLevel + 1), 250);
     }
   }
 
@@ -109,11 +116,12 @@ export default function ProfileLevelTestScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      {/* 레벨 헤더 */}
+      {/* 레벨 헤더: 번호를 작게, 레이블을 크게 표시해 단계를 직관적으로 나타낸다 */}
       <View style={styles.header}>
-        <Text style={styles.levelTitle}>
-          lv.{currentLevel} — {LEVEL_LABELS[currentLevel]}
-        </Text>
+        <View style={styles.levelInfo}>
+          <Text style={styles.levelNumber}>lv.{currentLevel}</Text>
+          <Text style={styles.levelLabel}>{LEVEL_LABELS[currentLevel]}</Text>
+        </View>
 
         {/* 진행 바: 10개 세그먼트 */}
         <View style={styles.progressRow}>
@@ -152,7 +160,7 @@ export default function ProfileLevelTestScreen({ navigation }: Props) {
                   <Ionicons
                     name="refresh-outline"
                     size={18}
-                    color={colors.text.disabled}
+                    color={colors.accent}
                   />
                 </TouchableOpacity>
               )}
@@ -165,7 +173,8 @@ export default function ProfileLevelTestScreen({ navigation }: Props) {
         )}
 
         {/* 4지선다 평가 버튼
-            보더 없이 배경 tint로 구분하고, 선택 시 배경을 채워 강조한다. */}
+            선택하면 저장 후 다음 레벨로 자동 이동한다.
+            보더 없이 배경 tint/채움으로 상태를 구분한다. */}
         <View style={styles.ratingButtons}>
           {RATING_OPTIONS.map((option) => {
             const disabled = isButtonDisabled(option.value);
@@ -177,10 +186,11 @@ export default function ProfileLevelTestScreen({ navigation }: Props) {
                   styles.ratingButton,
                   disabled
                     ? styles.ratingButtonDisabled
-                    : { backgroundColor: selected ? option.color : option.color + '20' },
+                    : { backgroundColor: selected ? option.color : option.color + '22' },
                 ]}
-                onPress={() => setRating(currentLevel, option.value)}
+                onPress={() => handleRating(option.value)}
                 disabled={disabled}
+                activeOpacity={0.75}
               >
                 <Text
                   style={[
@@ -248,9 +258,18 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     gap: 14,
   },
-  levelTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+  levelInfo: {
+    gap: 2,
+  },
+  levelNumber: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: colors.accent,
+    letterSpacing: 0.5,
+  },
+  levelLabel: {
+    fontSize: 20,
+    fontWeight: '700',
     color: colors.text.primary,
   },
   progressRow: {
@@ -299,8 +318,8 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   ratingButton: {
-    borderRadius: 12,
-    paddingVertical: 14,
+    borderRadius: 14,
+    paddingVertical: 16,
     alignItems: 'center',
   },
   ratingButtonDisabled: {
