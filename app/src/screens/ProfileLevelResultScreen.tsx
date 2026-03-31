@@ -1,4 +1,5 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import { ProfileStackParamList } from '../navigation/RootNavigator';
@@ -29,6 +30,7 @@ const RESULT_CARDS = [
 
 
 export default function ProfileLevelResultScreen({ navigation }: Props) {
+  const insets = useSafeAreaInsets();
   const { ratings } = useLevelTestStore();
 
   const { easyLevel, activeLevel, hardLevel, fallbacks } = calculateLevels(ratings);
@@ -102,7 +104,7 @@ export default function ProfileLevelResultScreen({ navigation }: Props) {
 
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
         <Button
           label="다음"
           onPress={handleNext}

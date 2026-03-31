@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { BackHandler, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ProfileStackParamList } from '../navigation/RootNavigator';
 import { useProfileStore } from '../stores/profileStore';
@@ -19,6 +20,7 @@ const LEVEL_CARDS = [
 ];
 
 export default function ProfileCompleteScreen({ navigation }: Props) {
+  const insets = useSafeAreaInsets();
   const { nickname, purposes, easyLevel, activeLevel, hardLevel } = useProfileStore();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -100,7 +102,7 @@ export default function ProfileCompleteScreen({ navigation }: Props) {
       </ScrollView>
 
       {/* 하단 버튼 */}
-      <View style={styles.footer}>
+      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
         <TouchableOpacity
           style={[styles.primaryButton, loading && styles.buttonDisabled]}
           onPress={handleComplete}

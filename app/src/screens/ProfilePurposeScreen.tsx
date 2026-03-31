@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ProfileStackParamList } from '../navigation/RootNavigator';
 import { updateProfile } from '../services/profileService';
@@ -41,6 +42,7 @@ const PURPOSE_GROUPS: PurposeGroup[] = [
 const MAX_SELECT = 5;
 
 export default function ProfilePurposeScreen({ navigation }: Props) {
+  const insets = useSafeAreaInsets();
   const [selected, setSelected] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -134,7 +136,7 @@ export default function ProfilePurposeScreen({ navigation }: Props) {
         {error ? <Text style={styles.error}>{error}</Text> : null}
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
         <Button
           label={loading ? '저장 중...' : '다음'}
           onPress={handleNext}
