@@ -7,7 +7,7 @@ export const colors = {
   text: {
     primary: '#f5f5f5',    // 주요 텍스트
     secondary: '#888888',  // 보조 텍스트
-    disabled: '#444444',   // placeholder
+    disabled: '#5a5a5a',   // placeholder
   },
   border: {
     default: '#2e2e2e',    // 기본 테두리
