@@ -94,12 +94,8 @@ export default function ProfileScreen() {
       return () => {
         const s = stateRef.current;
         const tab = s.activeTab;
-        if (tab === '기본') {
-          const trimmed = s.nickname.trim();
-          if (trimmed && trimmed !== s.storeNickname) {
-            updateProfile({ nickname: trimmed }).catch(() => {});
-          }
-        } else if (tab === '학습 목적') {
+        // 닉네임은 버튼으로만 저장하므로 기본 탭은 자동저장하지 않는다.
+        if (tab === '학습 목적') {
           if (JSON.stringify(s.purposes) !== JSON.stringify(s.storePurposes) && s.purposes.length >= 1) {
             updateProfile({ purposes: s.purposes }).catch(() => {});
           }
@@ -121,12 +117,8 @@ export default function ProfileScreen() {
   // 탭별 변경사항 감지 후 서버 저장
   async function autoSave(tab: TabName) {
     try {
-      if (tab === '기본') {
-        const trimmed = nickname.trim();
-        if (trimmed && trimmed !== storeNickname) {
-          await updateProfile({ nickname: trimmed });
-        }
-      } else if (tab === '학습 목적') {
+      // 닉네임은 버튼으로만 저장하므로 기본 탭은 자동저장하지 않는다.
+      if (tab === '학습 목적') {
         const changed = JSON.stringify(purposes) !== JSON.stringify(storePurposes);
         if (changed && purposes.length >= 1) {
           await updateProfile({ purposes });
@@ -176,8 +168,8 @@ export default function ProfileScreen() {
   // --- 학습 목적 탭 ---
   function handlePurposeToggle(item: string) {
     setPurposes((prev) => {
+      // 0개가 되어도 허용한다. autoSave에서 1개 이상일 때만 저장한다.
       if (prev.includes(item)) {
-        if (prev.length === 1) return prev;
         return prev.filter((p) => p !== item);
       }
       if (prev.length >= MAX_PURPOSE) return prev;
@@ -238,14 +230,22 @@ export default function ProfileScreen() {
           <TextInput
             label="닉네임"
             value={nickname}
-            onChangeText={(v) => { setNickname(v); setNicknameSaved(false); }}
+            onChangeText={(v) => {
+              setNickname(v);
+              setNicknameSaved(false);
+              // 입력할 때마다 유효성 검사
+              const t = v.trim();
+              if (!t) setNicknameError('닉네임을 입력해주세요');
+              else if (t.length > 10) setNicknameError('닉네임은 10자 이하로 입력해주세요');
+              else setNicknameError('');
+            }}
             error={nicknameError}
             maxLength={10}
           />
           <Button
             label={nicknameSaved ? '저장됨' : '닉네임 변경'}
             onPress={handleNicknameSave}
-            disabled={nickname.trim() === storeNickname || nicknameSaved}
+            disabled={!nickname.trim() || nickname.trim() === storeNickname || nicknameSaved || !!nicknameError}
           />
         </View>
 

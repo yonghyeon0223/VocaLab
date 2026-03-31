@@ -49,14 +49,11 @@ export default function ProfilePurposeScreen({ navigation }: Props) {
     setSelected((prev) => {
       const isSelected = prev.includes(item);
 
-      // 마지막 1개 칩은 해제 불가
-      if (isSelected && prev.length === 1) return prev;
-
+      // 0개가 되어도 허용한다. 다음 버튼이 비활성화되므로 안전하다.
       if (isSelected) {
         return prev.filter((v) => v !== item);
       }
 
-      // 5개 초과 선택 불가
       if (prev.length >= MAX_SELECT) return prev;
 
       return [...prev, item];

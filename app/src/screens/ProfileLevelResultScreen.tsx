@@ -38,9 +38,8 @@ export default function ProfileLevelResultScreen({ navigation }: Props) {
   const isRetest = !navigation.getState().routeNames.includes('ProfilePurpose');
 
   function handleNext() {
-    // 테스트 임시 데이터를 지워 다음 테스트에 영향을 주지 않게 한다.
-    useLevelTestStore.getState().reset();
-
+    // reset은 여기서 하지 않는다.
+    // 재테스트 진입 시(ProfileScreen.handleRetakeTest)에서만 초기화한다.
     if (isRetest) {
       navigation.popToTop();
     } else {
