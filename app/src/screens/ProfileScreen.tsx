@@ -34,7 +34,7 @@ const PURPOSE_GROUPS = [
 
 const MAX_PURPOSE = 5;
 const LEVELS = Array.from({ length: 10 }, (_, i) => i + 1);
-const TABS = ['기본', '학습 목적', '난이도'] as const;
+const TABS = ['기본', '학습 목적', '예문 난이도'] as const;
 type TabName = typeof TABS[number];
 
 // 구간별 색상
@@ -103,7 +103,7 @@ export default function ProfileScreen() {
           if (JSON.stringify(s.purposes) !== JSON.stringify(s.storePurposes) && s.purposes.length >= 1) {
             updateProfile({ purposes: s.purposes }).catch(() => {});
           }
-        } else if (tab === '난이도') {
+        } else if (tab === '예문 난이도') {
           if (s.easyLevel !== s.storeEasy || s.activeLevel !== s.storeActive || s.hardLevel !== s.storeHard) {
             updateProfile({ easyLevel: s.easyLevel, activeLevel: s.activeLevel, hardLevel: s.hardLevel }).catch(() => {});
           }
@@ -131,7 +131,7 @@ export default function ProfileScreen() {
         if (changed && purposes.length >= 1) {
           await updateProfile({ purposes });
         }
-      } else if (tab === '난이도') {
+      } else if (tab === '예문 난이도') {
         const changed = easyLevel !== storeEasy || activeLevel !== storeActive || hardLevel !== storeHard;
         if (changed) {
           await updateProfile({ easyLevel, activeLevel, hardLevel });
@@ -348,7 +348,7 @@ export default function ProfileScreen() {
 
         <TouchableOpacity style={styles.retestButton} onPress={handleRetakeTest} activeOpacity={0.7}>
           <Ionicons name="refresh-outline" size={18} color={colors.accent} />
-          <Text style={styles.retestText}>난이도 테스트 다시 받기</Text>
+          <Text style={styles.retestText}>예문 난이도 테스트 받기</Text>
         </TouchableOpacity>
       </ScrollView>
     );
@@ -375,7 +375,7 @@ export default function ProfileScreen() {
       {/* 탭 내용 */}
       {activeTab === '기본' && renderBasicTab()}
       {activeTab === '학습 목적' && renderPurposeTab()}
-      {activeTab === '난이도' && renderLevelTab()}
+      {activeTab === '예문 난이도' && renderLevelTab()}
 
       {/* 토스트 */}
       {toast ? (
