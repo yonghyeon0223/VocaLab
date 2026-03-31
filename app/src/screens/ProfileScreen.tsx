@@ -268,10 +268,7 @@ export default function ProfileScreen() {
     const isMax = purposes.length >= MAX_PURPOSE;
     return (
       <ScrollView contentContainerStyle={styles.tabBody} showsVerticalScrollIndicator={false}>
-        <View style={styles.purposeIntro}>
-          <Text style={styles.purposeIntroTitle}>관심 있는 주제의 문장으로 학습하면{'\n'}덜 지루하고, 기억에도 더 오래 남아요</Text>
-          <Text style={styles.purposeIntroDesc}>관련 예문을 더 자주 접할 수 있어요.</Text>
-        </View>
+        <Text style={styles.purposeIntroTitle}>관심 있는 주제의 문장으로 학습하면{'\n'}덜 지루하고, 기억에도 더 오래 남아요</Text>
 
         <View style={styles.counterRow}>
           <Text style={styles.counterText}>
