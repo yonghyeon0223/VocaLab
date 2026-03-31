@@ -268,6 +268,8 @@ export default function ProfileScreen() {
     const isMax = purposes.length >= MAX_PURPOSE;
     return (
       <ScrollView contentContainerStyle={styles.tabBody} showsVerticalScrollIndicator={false}>
+        <Text style={styles.purposeHint}>선택한 주제와 관련된 예문이 더 자주 출제돼요</Text>
+
         <View style={styles.counterRow}>
           <Text style={styles.counterText}>
             <Text style={[styles.counterNum, isMax && styles.counterMax]}>{purposes.length}</Text>
@@ -357,8 +359,7 @@ export default function ProfileScreen() {
         <View style={styles.levelIntro}>
           <Text style={styles.levelIntroTitle}>예문 난이도를 직접 조정할 수 있어요</Text>
           <Text style={styles.levelIntroDesc}>
-            회원가입 때 받은 테스트 결과를 기반으로 설정되어 있어요.{'\n'}
-            좌우 화살표로 레벨을 바꾸거나, 테스트를 다시 받을 수 있어요.
+            회원가입 때 받은 테스트 결과를 기반으로 설정되어 있어요.
           </Text>
         </View>
 
@@ -388,16 +389,6 @@ export default function ProfileScreen() {
           <Text style={styles.retestText}>예문 난이도 테스트 받기</Text>
         </TouchableOpacity>
 
-        {/* 레벨 참고표 */}
-        <View style={styles.levelTable}>
-          <Text style={styles.levelTableTitle}>레벨 참고</Text>
-          {LEVELS.map((lv) => (
-            <View key={lv} style={styles.levelTableRow}>
-              <Text style={styles.levelTableNum}>lv.{lv}</Text>
-              <Text style={styles.levelTableLabel}>{LEVEL_LABELS[lv]}</Text>
-            </View>
-          ))}
-        </View>
       </ScrollView>
     );
   }
@@ -509,6 +500,10 @@ const styles = StyleSheet.create({
     color: colors.error,
   },
   // --- 학습 목적 탭 ---
+  purposeHint: {
+    fontSize: 14,
+    color: colors.text.secondary,
+  },
   counterRow: {
     alignItems: 'flex-end',
   },
@@ -673,33 +668,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#fff',
-  },
-  levelTable: {
-    backgroundColor: colors.background.secondary,
-    borderRadius: 12,
-    padding: 16,
-    gap: 8,
-  },
-  levelTableTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.text.secondary,
-    marginBottom: 4,
-  },
-  levelTableRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  levelTableNum: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.accent,
-    width: 36,
-  },
-  levelTableLabel: {
-    fontSize: 14,
-    color: colors.text.primary,
   },
   // --- 토스트 ---
   toast: {
