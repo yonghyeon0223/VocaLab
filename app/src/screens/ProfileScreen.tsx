@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Dimensions,
   ScrollView,
@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../constants/colors';
@@ -83,6 +83,34 @@ export default function ProfileScreen() {
 
   // 이전 탭 추적: 탭 전환 시 변경사항이 있으면 자동 저장한다.
   const prevTabRef = useRef<TabName>(activeTab);
+
+  // 화면 이탈 시 autoSave가 최신 state를 읽을 수 있도록 ref에 보관한다.
+  const stateRef = useRef({ activeTab, nickname, storeNickname, purposes, storePurposes, easyLevel, storeEasy, activeLevel, storeActive, hardLevel, storeHard });
+  stateRef.current = { activeTab, nickname, storeNickname, purposes, storePurposes, easyLevel, storeEasy, activeLevel, storeActive, hardLevel, storeHard };
+
+  // 화면 포커스 해제(홈 탭 이동 등) 시 현재 탭의 변경사항을 저장한다.
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        const s = stateRef.current;
+        const tab = s.activeTab;
+        if (tab === '기본') {
+          const trimmed = s.nickname.trim();
+          if (trimmed && trimmed !== s.storeNickname) {
+            updateProfile({ nickname: trimmed }).catch(() => {});
+          }
+        } else if (tab === '학습 목적') {
+          if (JSON.stringify(s.purposes) !== JSON.stringify(s.storePurposes) && s.purposes.length >= 1) {
+            updateProfile({ purposes: s.purposes }).catch(() => {});
+          }
+        } else if (tab === '난이도') {
+          if (s.easyLevel !== s.storeEasy || s.activeLevel !== s.storeActive || s.hardLevel !== s.storeHard) {
+            updateProfile({ easyLevel: s.easyLevel, activeLevel: s.activeLevel, hardLevel: s.hardLevel }).catch(() => {});
+          }
+        }
+      };
+    }, []),
+  );
 
   function handleTabChange(tab: TabName) {
     autoSave(prevTabRef.current);
