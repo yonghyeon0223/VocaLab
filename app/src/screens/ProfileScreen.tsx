@@ -197,7 +197,7 @@ export default function ProfileScreen() {
   function handleRetakeTest() {
     // 자동 저장 후 테스트 플로우로 이동
     autoSave(activeTab);
-    navigation.navigate('ProfileLevelRetest');
+    navigation.navigate('ProfileLevelTest');
   }
 
   // --- 렌더링 ---
