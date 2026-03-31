@@ -23,6 +23,11 @@ type Props = {
 };
 
 export default function ProfileLevelTestScreen({ navigation }: Props) {
+  // 프로필 설정 플로우와 재테스트에서 결과 화면 이름이 다르다.
+  // 현재 navigator에 등록된 이름을 기준으로 결정한다.
+  const routeNames = navigation.getState().routeNames as string[];
+  const resultScreen = routeNames.includes('RetestResult') ? 'RetestResult' : 'ProfileLevelResult';
+
   const {
     currentLevel,
     ratings,
@@ -113,7 +118,7 @@ export default function ProfileLevelTestScreen({ navigation }: Props) {
       } catch {
         // 저장에 실패해도 결과는 볼 수 있게 계속 진행한다.
       }
-      navigation.navigate('ProfileLevelResult');
+      (navigation.navigate as (screen: string) => void)(resultScreen);
       return;
     }
 
@@ -138,7 +143,7 @@ export default function ProfileLevelTestScreen({ navigation }: Props) {
     } catch {
       // 저장에 실패해도 결과는 볼 수 있게 계속 진행한다.
     }
-    navigation.navigate('ProfileLevelResult');
+    (navigation.navigate as (screen: string) => void)(resultScreen);
   }
 
   if (loading) {

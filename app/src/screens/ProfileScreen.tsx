@@ -219,7 +219,7 @@ export default function ProfileScreen() {
     autoSave(activeTab);
     // 이전 테스트 데이터를 지워 깨끗한 상태로 시작한다.
     useLevelTestStore.getState().reset();
-    navigation.navigate('ProfileLevelTest');
+    navigation.navigate('RetestLevel');
   }
 
   // --- 렌더링 ---

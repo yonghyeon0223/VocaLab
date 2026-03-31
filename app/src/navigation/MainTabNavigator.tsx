@@ -17,8 +17,8 @@ export type MainStackParamList = {
   HomeTabs: undefined;
   WordSetName: undefined;
   WordSetWords: { name: string };
-  ProfileLevelTest: undefined;
-  ProfileLevelResult: undefined;
+  RetestLevel: undefined;
+  RetestResult: undefined;
 };
 
 type TabParamList = {
@@ -78,8 +78,8 @@ export default function MainTabNavigator() {
       <Stack.Screen name="HomeTabs" component={HomeTabs} />
       <Stack.Screen name="WordSetName" component={WordSetNameScreen} />
       <Stack.Screen name="WordSetWords" component={WordSetWordsScreen} />
-      <Stack.Screen name="ProfileLevelTest" component={ProfileLevelTestScreen} />
-      <Stack.Screen name="ProfileLevelResult" component={ProfileLevelResultScreen} />
+      <Stack.Screen name="RetestLevel" component={ProfileLevelTestScreen} />
+      <Stack.Screen name="RetestResult" component={ProfileLevelResultScreen} />
     </Stack.Navigator>
   );
 }
