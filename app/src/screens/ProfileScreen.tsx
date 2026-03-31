@@ -303,28 +303,48 @@ export default function ProfileScreen() {
     );
   }
 
-  function renderLevelRow(label: string, color: string, value: number, onSelect: (lv: number) => void) {
+  // 레벨 조절 UI: 좌우 화살표 + 현재 레벨 표시
+  function renderLevelStepper(
+    label: string,
+    description: string,
+    color: string,
+    value: number,
+    onSelect: (lv: number) => void,
+  ) {
     return (
       <View style={styles.levelSection}>
         <View style={styles.levelHeader}>
           <View style={[styles.levelDot, { backgroundColor: color }]} />
-          <Text style={styles.levelLabel}>{label}</Text>
-          <Text style={[styles.levelValue, { color }]}>lv.{value}</Text>
+          <View style={styles.levelHeaderText}>
+            <Text style={styles.levelLabel}>{label}</Text>
+            <Text style={styles.levelDesc}>{description}</Text>
+          </View>
         </View>
-        <View style={styles.levelButtons}>
-          {LEVELS.map((lv) => {
-            const isActive = lv === value;
-            return (
-              <TouchableOpacity
-                key={lv}
-                style={[styles.levelBtn, isActive && { backgroundColor: color }]}
-                onPress={() => onSelect(lv)}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.levelBtnText, isActive && styles.levelBtnTextActive]}>{lv}</Text>
-              </TouchableOpacity>
-            );
-          })}
+        <View style={styles.stepperRow}>
+          <TouchableOpacity
+            style={[styles.stepperArrow, value <= 1 && styles.stepperArrowDisabled]}
+            onPress={() => { if (value > 1) onSelect(value - 1); }}
+            disabled={value <= 1}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="chevron-back" size={20} color={value <= 1 ? colors.text.disabled : color} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.stepperValue, { backgroundColor: color + '22' }]}
+            onPress={() => fetchPreview(value)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.stepperValueNum, { color }]}>lv.{value}</Text>
+            <Text style={styles.stepperValueLabel}>{LEVEL_LABELS[value]}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.stepperArrow, value >= 10 && styles.stepperArrowDisabled]}
+            onPress={() => { if (value < 10) onSelect(value + 1); }}
+            disabled={value >= 10}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="chevron-forward" size={20} color={value >= 10 ? colors.text.disabled : color} />
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -333,9 +353,25 @@ export default function ProfileScreen() {
   function renderLevelTab() {
     return (
       <ScrollView contentContainerStyle={styles.tabBody} showsVerticalScrollIndicator={false}>
-        {renderLevelRow('처음 만날 때', ZONE_COLORS.easy, easyLevel, handleSetEasy)}
-        {renderLevelRow('실전 적용', ZONE_COLORS.active, activeLevel, handleSetActive)}
-        {renderLevelRow('심화', ZONE_COLORS.hard, hardLevel, handleSetHard)}
+        {/* 안내 문구 */}
+        <View style={styles.levelIntro}>
+          <Text style={styles.levelIntroTitle}>예문 난이도를 직접 조정할 수 있어요</Text>
+          <Text style={styles.levelIntroDesc}>
+            회원가입 때 받은 테스트 결과를 기반으로 설정되어 있어요.{'\n'}
+            좌우 화살표로 레벨을 바꾸거나, 테스트를 다시 받을 수 있어요.
+          </Text>
+        </View>
+
+        {/* 3구간 스테퍼 */}
+        {renderLevelStepper(
+          '처음 만날 때', '쉬운 문장으로 단어와 친해지는 구간', ZONE_COLORS.easy, easyLevel, handleSetEasy,
+        )}
+        {renderLevelStepper(
+          '실전 적용', '내 수준에서 단어를 실전으로 쓰는 구간', ZONE_COLORS.active, activeLevel, handleSetActive,
+        )}
+        {renderLevelStepper(
+          '심화', '한 단계 위 문장에 도전하는 구간', ZONE_COLORS.hard, hardLevel, handleSetHard,
+        )}
 
         {/* 예문 미리보기 */}
         {previewSentence && previewLevel && (
@@ -346,10 +382,22 @@ export default function ProfileScreen() {
           </View>
         )}
 
-        <TouchableOpacity style={styles.retestButton} onPress={handleRetakeTest} activeOpacity={0.7}>
-          <Ionicons name="refresh-outline" size={18} color={colors.accent} />
+        {/* 테스트 받기 버튼 */}
+        <TouchableOpacity style={styles.retestButton} onPress={handleRetakeTest} activeOpacity={0.8}>
+          <Ionicons name="refresh-outline" size={18} color="#fff" />
           <Text style={styles.retestText}>예문 난이도 테스트 받기</Text>
         </TouchableOpacity>
+
+        {/* 레벨 참고표 */}
+        <View style={styles.levelTable}>
+          <Text style={styles.levelTableTitle}>레벨 참고</Text>
+          {LEVELS.map((lv) => (
+            <View key={lv} style={styles.levelTableRow}>
+              <Text style={styles.levelTableNum}>lv.{lv}</Text>
+              <Text style={styles.levelTableLabel}>{LEVEL_LABELS[lv]}</Text>
+            </View>
+          ))}
+        </View>
       </ScrollView>
     );
   }
@@ -518,49 +566,77 @@ const styles = StyleSheet.create({
   chipTextDisabled: {
     color: colors.text.disabled,
   },
-  // --- 난이도 탭 ---
+  // --- 예문 난이도 탭 ---
+  levelIntro: {
+    gap: 6,
+  },
+  levelIntroTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: colors.text.primary,
+  },
+  levelIntroDesc: {
+    fontSize: 14,
+    color: colors.text.secondary,
+    lineHeight: 21,
+  },
   levelSection: {
     gap: 10,
   },
   levelHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 8,
+  },
+  levelHeaderText: {
+    flex: 1,
+    gap: 2,
   },
   levelDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
+    marginTop: 4,
   },
   levelLabel: {
     fontSize: 15,
     fontWeight: '600',
     color: colors.text.primary,
-    flex: 1,
   },
-  levelValue: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  levelButtons: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  levelBtn: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: colors.background.secondary,
-  },
-  levelBtnText: {
+  levelDesc: {
     fontSize: 14,
-    fontWeight: '500',
     color: colors.text.secondary,
   },
-  levelBtnTextActive: {
-    color: '#fff',
+  stepperRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  stepperArrow: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.background.secondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepperArrowDisabled: {
+    opacity: 0.3,
+  },
+  stepperValue: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderRadius: 12,
+    gap: 2,
+  },
+  stepperValueNum: {
+    fontSize: 18,
     fontWeight: '700',
+  },
+  stepperValueLabel: {
+    fontSize: 14,
+    color: colors.text.secondary,
   },
   previewCard: {
     backgroundColor: colors.background.secondary,
@@ -588,13 +664,42 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 12,
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: colors.accent,
   },
   retestText: {
-    fontSize: 15,
-    fontWeight: '500',
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  levelTable: {
+    backgroundColor: colors.background.secondary,
+    borderRadius: 12,
+    padding: 16,
+    gap: 8,
+  },
+  levelTableTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text.secondary,
+    marginBottom: 4,
+  },
+  levelTableRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  levelTableNum: {
+    fontSize: 14,
+    fontWeight: '600',
     color: colors.accent,
+    width: 36,
+  },
+  levelTableLabel: {
+    fontSize: 14,
+    color: colors.text.primary,
   },
   // --- 토스트 ---
   toast: {
