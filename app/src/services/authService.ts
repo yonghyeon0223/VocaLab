@@ -2,7 +2,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuthStore } from '../stores/authStore';
 import { useProfileStore } from '../stores/profileStore';
 import { useLevelTestStore } from '../stores/levelTestStore';
+import { useWordSetStore } from '../stores/wordSetStore';
 import api, { ASYNC_STORAGE_KEYS } from './api';
+import { fetchProfile } from './profileService';
 
 // 회원가입 1단계 — 이메일만 전송해 중복 확인 + 인증 코드 발송을 요청한다.
 // 비밀번호는 이메일 인증 완료 단계(verifyEmail)에서 함께 보낸다.
@@ -45,6 +47,11 @@ export async function login(email: string, password: string) {
   await AsyncStorage.setItem(ASYNC_STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
   useAuthStore.getState().setAccessToken(accessToken);
   useProfileStore.getState().setProfile({ profileCompleted });
+
+  // 프로필 완료 상태라면 전체 프로필 데이터를 가져온다.
+  if (profileCompleted) {
+    await fetchProfile().catch(() => {});
+  }
 }
 
 // 앱 재실행 시 AsyncStorage에 Refresh Token이 있으면 자동 로그인을 시도한다.
@@ -61,6 +68,10 @@ export async function tryAutoLogin() {
     };
     useAuthStore.getState().setAccessToken(accessToken);
     useProfileStore.getState().setProfile({ profileCompleted });
+
+    if (profileCompleted) {
+      await fetchProfile().catch(() => {});
+    }
   } catch {
     await AsyncStorage.removeItem(ASYNC_STORAGE_KEYS.REFRESH_TOKEN);
   }
@@ -76,5 +87,6 @@ export async function logout() {
     useAuthStore.getState().clearAuth();
     useProfileStore.getState().clearProfile();
     useLevelTestStore.getState().reset();
+    useWordSetStore.getState().reset();
   }
 }

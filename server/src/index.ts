@@ -3,9 +3,12 @@ import { ENV } from './utils/env';
 import { connectDB } from './utils/db';
 import { ensureIndexes as ensureUserIndexes } from './repositories/userRepository';
 import { ensureIndexes as ensurePendingIndexes } from './repositories/pendingVerificationRepository';
+import { ensureIndexes as ensureWordSetIndexes } from './repositories/wordSetRepository';
+import { ensureIndexes as ensureWordIndexes } from './repositories/wordRepository';
 import authRouter from './routes/auth';
 import profileRouter from './routes/profile';
 import sentenceRouter from './routes/sentences';
+import wordSetRouter from './routes/wordSets';
 import { seedIfEmpty } from './repositories/sentenceRepository';
 import { TEST_SENTENCES } from './seeds/testSentences';
 import { errorMiddleware } from './middlewares/errorMiddleware';
@@ -28,6 +31,9 @@ app.use('/api/users', profileRouter);
 // 예문 엔드포인트 (/api/sentences/*)
 app.use('/api/sentences', sentenceRouter);
 
+// 단어 세트 엔드포인트 (/api/word-sets/*)
+app.use('/api/word-sets', wordSetRouter);
+
 // 모든 라우터 아래에 에러 핸들러를 등록한다.
 app.use(errorMiddleware);
 
@@ -37,6 +43,8 @@ async function bootstrap() {
   await connectDB();
   await ensureUserIndexes();
   await ensurePendingIndexes();
+  await ensureWordSetIndexes();
+  await ensureWordIndexes();
   // testSentences 컬렉션이 비어있으면 시드 데이터를 삽입한다.
   await seedIfEmpty(TEST_SENTENCES);
   app.listen(ENV.PORT, () => {

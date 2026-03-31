@@ -1,5 +1,6 @@
 import { ObjectId } from 'mongodb';
 import * as userProfileRepository from '../repositories/userProfileRepository';
+import * as userRepository from '../repositories/userRepository';
 import { AppError } from '../utils/AppError';
 
 type ProfileUpdateInput = {
@@ -10,6 +11,16 @@ type ProfileUpdateInput = {
   hardLevel?: number;
   levelRatings?: Record<string, string>;
 };
+
+// 프로필 조회. 비밀번호와 토큰 등 민감 필드를 제외하고 반환한다.
+export async function getProfile(userId: string) {
+  const user = await userRepository.findById(new ObjectId(userId));
+  if (!user) {
+    throw new AppError('USER_NOT_FOUND', 404, '유저를 찾을 수 없습니다');
+  }
+  const { password, refreshToken, loginAttempts, lockedUntil, ...profile } = user;
+  return profile;
+}
 
 // 프로필 필드를 부분 업데이트한다.
 // 업데이트 후 변경된 유저 document를 반환해 클라이언트가 최신 상태를 유지할 수 있게 한다.

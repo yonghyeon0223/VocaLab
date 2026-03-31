@@ -3,6 +3,19 @@ import * as profileService from '../services/profileService';
 import { updateProfileSchema } from '../validators/profileValidator';
 import { AppError } from '../utils/AppError';
 
+// 프로필 조회. 민감 필드 제외 후 반환.
+export async function getProfile(req: Request, res: Response, next: NextFunction) {
+  try {
+    if (!req.userId) {
+      return next(new AppError('UNAUTHORIZED', 401, '인증이 필요합니다'));
+    }
+    const profile = await profileService.getProfile(req.userId);
+    res.json({ success: true, data: { profile } });
+  } catch (err) {
+    next(err);
+  }
+}
+
 // 프로필 필드 부분 업데이트.
 // authenticate 미들웨어를 통과한 요청이므로 req.userId가 반드시 존재한다.
 export async function updateProfile(req: Request, res: Response, next: NextFunction) {

@@ -10,6 +10,29 @@ type ProfileUpdateInput = {
   levelRatings?: Record<string, string>;
 };
 
+// 서버에서 프로필 전체를 가져와 store에 반영한다.
+// 로그인 직후 또는 자동 로그인 시 호출한다.
+export async function fetchProfile() {
+  const res = await api.get('/api/users/profile');
+  const profile = res.data.data.profile as {
+    profileCompleted: boolean;
+    nickname: string;
+    purposes: string[];
+    easyLevel: number;
+    activeLevel: number;
+    hardLevel: number;
+  };
+
+  const store = useProfileStore.getState();
+  store.setProfile({ profileCompleted: profile.profileCompleted, nickname: profile.nickname });
+  if (profile.purposes?.length) store.setPurposes(profile.purposes);
+  if (profile.easyLevel) store.setLevels({
+    easyLevel: profile.easyLevel,
+    activeLevel: profile.activeLevel,
+    hardLevel: profile.hardLevel,
+  });
+}
+
 // 프로필 필드를 부분 업데이트한다.
 // 성공하면 전달한 필드를 profileStore에도 반영해 UI가 최신 상태를 유지한다.
 export async function updateProfile(data: ProfileUpdateInput) {

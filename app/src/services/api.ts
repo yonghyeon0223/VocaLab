@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { useAuthStore } from '../stores/authStore';
 import { useLevelTestStore } from '../stores/levelTestStore';
+import { useWordSetStore } from '../stores/wordSetStore';
 
 const REFRESH_TOKEN_KEY = 'refreshToken';
 
@@ -60,6 +61,7 @@ api.interceptors.response.use(
         await AsyncStorage.removeItem(REFRESH_TOKEN_KEY);
         useAuthStore.getState().clearAuth();
         useLevelTestStore.getState().reset();
+        useWordSetStore.getState().reset();
         return Promise.reject(error);
       }
     }

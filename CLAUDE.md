@@ -277,7 +277,85 @@ type ProfileState = {
 
 ---
 
-## 📐 기술 참고 (Sprint 03까지 축적)
+### Sprint 04 — 앱 뼈대 + 단어 세트 생성 + 프로필
+
+#### 탭 네비게이션
+
+하단 4개 탭: 홈, 학습(placeholder), 장기기억 연구소(placeholder), 프로필.
+`@react-navigation/bottom-tabs` v6 사용.
+
+```
+MainTabNavigator (NativeStack)
+  ├── HomeTabs (BottomTab)
+  │     ├── Home (HomeScreen)
+  │     ├── Learning (placeholder)
+  │     ├── MemoryLab (placeholder)
+  │     └── Profile (ProfileScreen)
+  ├── WordSetName (세트 이름 입력)
+  ├── WordSetWords (단어 일괄 입력)
+  ├── ProfileLevelRetest (난이도 재테스트)
+  └── ProfileLevelRetestResult (재테스트 결과)
+```
+
+#### DB 엔티티
+
+**`WordSet`** (`wordSets` 컬렉션)
+```typescript
+type WordSet = {
+  _id: ObjectId;
+  userId: ObjectId;
+  name: string;           // 1~30자
+  wordCount: number;      // 비정규화
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+인덱스: `{ userId: 1, createdAt: -1 }`
+
+**`Word`** (`words` 컬렉션)
+```typescript
+type Word = {
+  _id: ObjectId;
+  wordSetId: ObjectId;
+  userId: ObjectId;
+  spelling: string;       // 소문자 정규화
+  createdAt: Date;
+}
+```
+인덱스: `{ wordSetId: 1 }`
+
+#### 단어 세트 생성 규칙
+
+- 줄바꿈(`\n`) 또는 쉼표(`,`)로 단어 구분
+- 각 단어: trim + 소문자 정규화
+- 중복 자동 제거 (대소문자 무시)
+- 최소 5개, 최대 200개
+- 클라이언트와 서버 양쪽에서 동일한 규칙 검증
+
+#### 프로필 화면 (3탭)
+
+| 탭 | 기능 |
+|----|------|
+| 기본 | 닉네임 수정, 비밀번호(placeholder), 로그아웃 |
+| 학습 목적 | 칩 선택/해제 (1~5개) |
+| 난이도 | lv.1~10 직접 설정, 역전 방지, 예문 미리보기, 재테스트 |
+
+- **자동 저장**: 탭 전환 시 변경사항 감지 → PATCH 요청
+- 실패 시 토스트 메시지 표시
+
+#### 구현된 엔드포인트
+
+| 메서드 | 경로 | 인증 | 설명 |
+|--------|------|------|------|
+| GET | `/api/users/profile` | Bearer | 프로필 조회 (민감 필드 제외) |
+| POST | `/api/word-sets` | Bearer | 단어 세트 생성 |
+| GET | `/api/word-sets` | Bearer | 세트 목록 조회 (최신순) |
+| GET | `/api/word-sets/:id` | Bearer | 세트 상세 + 단어 목록 |
+| DELETE | `/api/word-sets/:id` | Bearer | 세트 + 단어 삭제 |
+
+---
+
+## 📐 기술 참고 (Sprint 04까지 축적)
 
 > **이 섹션은 참고용이며, 반드시 따라야 하는 규칙이 아닙니다.**
 > 이전 스프린트에서 내린 기술적 결정의 맥락을 보존하기 위해 기록합니다.
@@ -291,10 +369,12 @@ type ProfileState = {
 | `signupStore` | 회원가입 중 임시 이메일/비밀번호 | 메모리 |
 | `profileStore` | nickname, levels, purposes, profileCompleted | 메모리 (서버와 동기화) |
 | `levelTestStore` | currentLevel, ratings, sentences | 메모리 |
+| `wordSetStore` | 단어 세트 목록 캐싱 | 메모리 (서버와 동기화) |
 
 - `signupStore`는 AsyncStorage에 저장하지 않음. 앱 종료 = 처음부터.
 - `levelTestStore`는 로그아웃 시 `reset()` 호출해서 유저 간 데이터 오염 방지.
 - `profileStore`는 로그아웃 시 `clearProfile()` 호출.
+- `wordSetStore`는 로그아웃 시 `reset()` 호출.
 
 ### Axios 인터셉터 (Token Refresh)
 
@@ -573,73 +653,6 @@ const wordSets = useWordSetStore((s) => s.wordSets);
 - 스프린트 범위 밖 기능 선구현
 - `console.log` 디버깅 코드 커밋
 - **클라이언트-서버 검증 규칙 불일치**: 서버(Zod 스키마)에 검증 규칙이 있으면, 해당 요청을 보내는 클라이언트 화면에도 **동일한 규칙을 반드시 먼저** 적용할 것. 서버 에러 메시지가 엉뚱한 화면에서 노출되는 사고를 방지한다. (예: 회원가입 비밀번호 규칙이 인증 코드 화면에서 표시되는 버그 — Sprint 03에서 발견·수정)
-
----
-
-## 📐 기술 참고 (Sprint 01~03 축적)
-
-> **주의**: 이 섹션은 현재까지의 구현 방식을 정리한 **참고용 기록**이다.
-> must-follow 규칙이 아니며, 이후 스프린트에서 더 나은 방식이 있으면 교체해도 된다.
-> 코드베이스 실제 상태가 항상 이 문서보다 우선한다.
-
----
-
-### Zustand 스토어 패턴
-
-- 스토어 파일은 `app/src/stores/` 아래 `camelCase.ts`로 생성
-- 상태 타입은 파일 상단에 `type XxxState = { ... }` 형태로 정의 (인터페이스 대신 type)
-- `create<XxxState>((set, get) => ({ ... }))` 형태 사용
-- 비동기 로직은 스토어 밖(service 레이어)에서 처리 후 결과만 스토어에 set
-- 다른 서비스/파일에서 스토어 값을 직접 읽어야 할 때: `useXxxStore.getState().field`
-
-### 세션 간 스토어 오염 방지
-
-- `authService.logout()`, `api.ts` 토큰 재발급 실패 경로 양쪽에 `store.reset()` 호출
-- 프로필 설정처럼 플로우가 있는 스토어는 반드시 `reset()` 액션을 구현해둘 것
-- 이유: 이전 사용자의 미완료 상태가 다음 로그인 세션에 남아있을 수 있음
-
-### Safe Area 처리
-
-- `react-native-safe-area-context`의 `useSafeAreaInsets()` 사용
-- 하단 홈 인디케이터/내비게이션 바 침범 방지: `paddingBottom: insets.bottom + N`
-- 화면 레벨 컴포넌트의 ScrollView `contentContainerStyle`에 적용
-- 고정 footer가 있는 경우 footer View에 `paddingBottom: insets.bottom` 적용
-
-### PanResponder + ScrollView 한계
-
-- `PanResponder`는 JS 레벨 제스처 핸들러 — ScrollView의 네이티브 제스처와 충돌
-- 수평 스와이프 네비게이션을 ScrollView 안에서 구현하면 동작하지 않음
-- 대안: React Navigation의 네이티브 스택 제스처(iOS 엣지 스와이프), 별도 Gesture Handler 라이브러리
-- Sprint 03 결론: 스와이프 제거, 이전 버튼으로 대체
-
-### 레벨 테스트 상태 머신
-
-```
-초기: currentLevel=1, ratings={}
-
-선택 → setRating(level, value) → 이후 레벨 전부 삭제
-     → currentLevel < 10: setTimeout 250ms → setCurrentLevel(level+1)
-     → alien 선택: setAlienFrom(level) → DB 저장 → navigate('Result')
-     → level === 10: DB 저장 → navigate('Result')
-
-이전 → clearRatingsFrom(currentLevel - 1) → setCurrentLevel(level-1)
-```
-
-### DB 저장 타이밍 패턴
-
-- 결과/완료 화면의 "다음" 버튼이 아닌, **실제 데이터가 확정되는 시점**에 저장
-- 이유: "다음"을 누르지 않고 앱을 닫아도 데이터가 보존됨
-- ProfileLevelTest: lv.10 완료 또는 alien 선택 → 즉시 `updateProfile()` 호출
-- `updateProfile` 실패해도 UX는 계속 진행 (결과는 store에 있으므로 화면 표시 가능)
-
-### Axios 인터셉터 구조 (`app/src/services/api.ts`)
-
-- 요청 인터셉터: `accessToken`을 `Authorization: Bearer` 헤더에 자동 첨부
-- 응답 인터셉터: 401 수신 시 `/api/auth/refresh` 호출 → 성공 시 원래 요청 재시도
-- 재발급 실패 시: `authStore.logout()` + `levelTestStore.reset()` + `profileStore.reset()` 호출
-- 재발급 요청 중 추가 401이 들어오면 큐에 쌓아두고 재발급 완료 후 일괄 처리
-
----
 
 ## 📎 환경변수 목록
 ```

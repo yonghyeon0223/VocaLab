@@ -36,6 +36,25 @@ export type TestSentence = {
   translation: string; // 한국어 번역
 };
 
+// 단어 세트. 유저 1명이 여러 세트를 가질 수 있다.
+export type WordSet = {
+  _id: string;
+  userId: string;
+  name: string;           // 세트 이름 (1~30자)
+  wordCount: number;      // 세트 내 단어 수 (비정규화)
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+// 개별 영단어. wordSets 컬렉션에 속한다.
+export type Word = {
+  _id: string;
+  wordSetId: string;
+  userId: string;
+  spelling: string;       // 영단어 원형 (소문자 정규화)
+  createdAt: Date;
+};
+
 // 이메일 인증 대기 중인 임시 데이터. 인증 완료 또는 만료 시 삭제된다.
 export type PendingVerification = {
   _id: string;

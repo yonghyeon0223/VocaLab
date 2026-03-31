@@ -9,7 +9,7 @@ import ProfileLevelTestScreen from '../screens/ProfileLevelTestScreen';
 import ProfileLevelResultScreen from '../screens/ProfileLevelResultScreen';
 import ProfilePurposeScreen from '../screens/ProfilePurposeScreen';
 import ProfileCompleteScreen from '../screens/ProfileCompleteScreen';
-import MainScreen from '../screens/MainScreen';
+import MainTabNavigator from './MainTabNavigator';
 import { useAuthStore } from '../stores/authStore';
 import { useProfileStore } from '../stores/profileStore';
 
@@ -66,10 +66,8 @@ export default function RootNavigator() {
           <ProfileStack.Screen name="ProfileComplete" component={ProfileCompleteScreen} />
         </ProfileStack.Navigator>
       ) : (
-        // 인증 + 프로필 완료 — 메인 앱
-        <AuthStack.Navigator screenOptions={screenOptions}>
-          <AuthStack.Screen name="Main" component={MainScreen} />
-        </AuthStack.Navigator>
+        // 인증 + 프로필 완료 — 메인 앱 (탭 네비게이션)
+        <MainTabNavigator />
       )}
     </NavigationContainer>
   );
