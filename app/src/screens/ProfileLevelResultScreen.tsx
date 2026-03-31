@@ -38,8 +38,10 @@ export default function ProfileLevelResultScreen({ navigation }: Props) {
   const isRetest = !navigation.getState().routeNames.includes('ProfilePurpose');
 
   function handleNext() {
+    // 테스트 임시 데이터를 지워 다음 테스트에 영향을 주지 않게 한다.
+    useLevelTestStore.getState().reset();
+
     if (isRetest) {
-      // 재테스트 결과 → 테스트 → 탭 화면까지 2단계를 한 번에 돌아간다.
       navigation.popToTop();
     } else {
       navigation.navigate('ProfilePurpose');

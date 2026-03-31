@@ -21,6 +21,7 @@ import { updateProfile } from '../services/profileService';
 import { logout } from '../services/authService';
 import { MainStackParamList } from '../navigation/MainTabNavigator';
 import api from '../services/api';
+import { useLevelTestStore } from '../stores/levelTestStore';
 
 // 프로필 화면에서 사용할 학습 목적 그룹 (ProfilePurposeScreen과 동일)
 const PURPOSE_GROUPS = [
@@ -195,8 +196,9 @@ export default function ProfileScreen() {
   }
 
   function handleRetakeTest() {
-    // 자동 저장 후 테스트 플로우로 이동
     autoSave(activeTab);
+    // 이전 테스트 데이터를 지워 깨끗한 상태로 시작한다.
+    useLevelTestStore.getState().reset();
     navigation.navigate('ProfileLevelTest');
   }
 
