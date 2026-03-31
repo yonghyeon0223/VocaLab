@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ProfileStackParamList } from '../navigation/RootNavigator';
 import { LevelRatings, RatingValue } from '../../../shared/types';
@@ -23,8 +24,8 @@ type Props = {
 };
 
 export default function ProfileLevelTestScreen({ navigation }: Props) {
+  const insets = useSafeAreaInsets();
   // 프로필 설정 플로우와 재테스트에서 결과 화면 이름이 다르다.
-  // 현재 navigator에 등록된 이름을 기준으로 결정한다.
   const routeNames = navigation.getState().routeNames as string[];
   const resultScreen = routeNames.includes('RetestResult') ? 'RetestResult' : 'ProfileLevelResult';
 
@@ -203,7 +204,7 @@ export default function ProfileLevelTestScreen({ navigation }: Props) {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.body, { paddingBottom: Math.max(insets.bottom, 16) }]} showsVerticalScrollIndicator={false}>
         {/* 문장 카드
             여러 예문이 있을 때만 reload 아이콘이 나타난다. */}
         {currentSentence ? (
