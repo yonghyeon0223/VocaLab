@@ -268,7 +268,7 @@ export default function ProfileScreen() {
     const isMax = purposes.length >= MAX_PURPOSE;
     return (
       <ScrollView contentContainerStyle={styles.tabBody} showsVerticalScrollIndicator={false}>
-        <Text style={styles.purposeHint}>선택한 주제와 관련된 예문이 더 자주 출제돼요</Text>
+        <Text style={styles.purposeIntroTitle}>선택한 학습 목적과 관련된 예문이 더 자주 출제돼요</Text>
 
         <View style={styles.counterRow}>
           <Text style={styles.counterText}>
@@ -500,9 +500,10 @@ const styles = StyleSheet.create({
     color: colors.error,
   },
   // --- 학습 목적 탭 ---
-  purposeHint: {
-    fontSize: 14,
-    color: colors.text.secondary,
+  purposeIntroTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: colors.text.primary,
   },
   counterRow: {
     alignItems: 'flex-end',
