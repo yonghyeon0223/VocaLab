@@ -268,7 +268,10 @@ export default function ProfileScreen() {
     const isMax = purposes.length >= MAX_PURPOSE;
     return (
       <ScrollView contentContainerStyle={styles.tabBody} showsVerticalScrollIndicator={false}>
-        <Text style={styles.purposeIntroTitle}>선택한 학습 목적과 관련된 예문이 더 자주 출제돼요</Text>
+        <View style={styles.purposeIntro}>
+          <Text style={styles.purposeIntroTitle}>관심 있는 주제의 문장으로 학습하면{'\n'}덜 지루하고, 기억에도 더 오래 남아요</Text>
+          <Text style={styles.purposeIntroDesc}>관련 예문을 더 자주 접할 수 있어요.</Text>
+        </View>
 
         <View style={styles.counterRow}>
           <Text style={styles.counterText}>
@@ -500,10 +503,18 @@ const styles = StyleSheet.create({
     color: colors.error,
   },
   // --- 학습 목적 탭 ---
+  purposeIntro: {
+    gap: 6,
+  },
   purposeIntroTitle: {
     fontSize: 17,
     fontWeight: '600',
     color: colors.text.primary,
+  },
+  purposeIntroDesc: {
+    fontSize: 14,
+    color: colors.text.secondary,
+    lineHeight: 21,
   },
   counterRow: {
     alignItems: 'flex-end',
