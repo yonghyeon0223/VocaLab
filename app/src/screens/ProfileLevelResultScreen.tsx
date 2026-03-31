@@ -1,5 +1,6 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RouteProp, useRoute } from '@react-navigation/native';
 import { ProfileStackParamList } from '../navigation/RootNavigator';
 import { useLevelTestStore } from '../stores/levelTestStore';
 import { calculateLevels } from '../utils/levelCalculator';
@@ -32,10 +33,16 @@ export default function ProfileLevelResultScreen({ navigation }: Props) {
 
   const { easyLevel, activeLevel, hardLevel, fallbacks } = calculateLevels(ratings);
 
-  // 저장은 테스트 화면(lv.10 평가 시점)에서 완료됐다.
-  // 이 화면에서는 결과를 보여주고 다음 단계로 넘어가기만 한다.
+  // 프로필 설정 플로우에서는 다음 단계(ProfilePurpose)로,
+  // 재테스트(메인 앱)에서는 프로필 탭으로 돌아간다.
+  const isRetest = !navigation.getState().routeNames.includes('ProfilePurpose');
+
   function handleNext() {
-    navigation.navigate('ProfilePurpose');
+    if (isRetest) {
+      navigation.getParent()?.goBack();
+    } else {
+      navigation.navigate('ProfilePurpose');
+    }
   }
 
   return (
