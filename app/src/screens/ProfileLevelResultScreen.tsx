@@ -39,7 +39,8 @@ export default function ProfileLevelResultScreen({ navigation }: Props) {
 
   function handleNext() {
     if (isRetest) {
-      navigation.getParent()?.goBack();
+      // 재테스트 결과 → 테스트 → 탭 화면까지 2단계를 한 번에 돌아간다.
+      navigation.popToTop();
     } else {
       navigation.navigate('ProfilePurpose');
     }
