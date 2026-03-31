@@ -168,11 +168,14 @@ export default function VerifyEmailScreen({ navigation }: Props) {
           disabled={loading}
         />
 
-        <TouchableOpacity onPress={handleResend} disabled={cooldown > 0}>
-          <Text style={[styles.resend, cooldown > 0 && styles.resendDisabled]}>
-            {cooldown > 0 ? `재발송 (${cooldown}초 후 가능)` : '코드 재발송'}
-          </Text>
-        </TouchableOpacity>
+        {/* 쿨다운 중에는 안내 문구만, 가능할 때는 버튼 형태로 표시한다 */}
+        {cooldown > 0 ? (
+          <Text style={styles.resendHint}>코드가 오지 않았나요? {cooldown}초 후 재발송할 수 있어요</Text>
+        ) : (
+          <TouchableOpacity onPress={handleResend} style={styles.resendButton} activeOpacity={0.7}>
+            <Text style={styles.resendButtonText}>코드 재발송</Text>
+          </TouchableOpacity>
+        )}
 
         <TouchableOpacity onPress={handleBack}>
           <Text style={styles.back}>← 이전으로</Text>
@@ -238,13 +241,22 @@ const styles = StyleSheet.create({
     color: colors.error,
     textAlign: 'center',
   },
-  resend: {
-    fontSize: 13,
-    color: colors.accent,
-    fontWeight: '500',
+  resendHint: {
+    fontSize: 14,
+    color: colors.text.disabled,
+    textAlign: 'center',
   },
-  resendDisabled: {
-    color: colors.text.secondary,
+  resendButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 10,
+    backgroundColor: colors.accent + '18',
+  },
+  resendButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.accent,
+    textAlign: 'center',
   },
   back: {
     fontSize: 13,

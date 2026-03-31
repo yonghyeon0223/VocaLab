@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { BackHandler, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ProfileStackParamList } from '../navigation/RootNavigator';
 import { useProfileStore } from '../stores/profileStore';
@@ -23,18 +23,25 @@ export default function ProfileCompleteScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // 두 버튼 모두 profileCompleted: true 업데이트 후 메인 앱으로 이동한다.
-  // RootNavigator가 profileCompleted 변화를 감지해 자동으로 메인 앱을 렌더링한다.
+  // 완료 화면에서 뒤로가기를 막는다.
+  // 프로필 설정은 단방향 플로우이므로 이전 화면으로 돌아갈 수 없다.
+  useEffect(() => {
+    navigation.setOptions({ gestureEnabled: false });
+    const handler = BackHandler.addEventListener('hardwareBackPress', () => true);
+    return () => handler.remove();
+  }, [navigation]);
+
+  // profileCompleted: true로 변경해 RootNavigator가 메인 앱으로 전환하게 한다.
+  // 서버 저장 실패 시에도 store는 업데이트해 UX가 멈추지 않도록 한다.
   async function handleComplete() {
     setLoading(true);
     setError('');
     try {
       await completeProfile();
-      // profileCompleted가 true가 되면 RootNavigator가 메인 앱으로 전환하므로
-      // 명시적인 navigate 호출 불필요
     } catch {
-      setError('저장에 실패했어요. 다시 시도해주세요.');
-      setLoading(false);
+      // 서버 저장 실패해도 일단 메인으로 넘어간다.
+      // 다음 로그인 시 서버 상태와 동기화된다.
+      useProfileStore.getState().setProfileCompleted();
     }
   }
 
