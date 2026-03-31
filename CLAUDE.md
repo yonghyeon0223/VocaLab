@@ -241,7 +241,7 @@ lv.1~10에 대응하는 텍스트. `app/src/constants/levels.ts`에 정의.
 - **번역 기본 숨김**: 레벨 이동 시마다 번역 표시 상태 초기화
 - **로그아웃 시 store 초기화**: `authService.logout` 및 Axios 인터셉터 토큰 갱신 실패 시 `levelTestStore.reset()` 호출 — 다른 유저 로그인 시 이전 테스트 결과가 남지 않도록
 
-#### 글로벌 디자인 규칙 (Sprint 03 확립, semi-permanent)
+#### 글로벌 디자인 규칙 (Sprint 03~04 확립, semi-permanent)
 
 | 규칙 | 값 |
 |------|----|
@@ -250,6 +250,8 @@ lv.1~10에 대응하는 텍스트. `app/src/constants/levels.ts`에 정의.
 | 카드 설명(cardDescription) 폰트 | **15px** |
 | 버튼 스타일 | border 없음 — 선택: solid fill, 미선택: `color+'22'` tint |
 | progress bar 현재 위치 | 높이 차이로 강조 (현재 height 8, 나머지 height 4) |
+| text.disabled 색상 | `#666666` (Sprint 04에서 #444444 → #666666 상향) |
+| 하단 safe area | 모든 화면의 하단 요소에 `paddingBottom: Math.max(insets.bottom, 16)` 필수 |
 
 #### profileStore 필드
 
@@ -293,9 +295,11 @@ MainTabNavigator (NativeStack)
   │     └── Profile (ProfileScreen)
   ├── WordSetName (세트 이름 입력)
   ├── WordSetWords (단어 일괄 입력)
-  ├── ProfileLevelRetest (난이도 재테스트)
-  └── ProfileLevelRetestResult (재테스트 결과)
+  ├── RetestLevel (예문 난이도 재테스트)
+  └── RetestResult (재테스트 결과)
 ```
+
+**화면 이름 충돌 방지**: ProfileStack과 MainTabNavigator에 동일한 이름이 있으면 navigator 전환 시 이전 state가 복원되어 의도치 않은 화면으로 이동한다. 재테스트 화면은 `RetestLevel`/`RetestResult`로 별도 명명.
 
 #### DB 엔티티
 
@@ -336,12 +340,21 @@ type Word = {
 
 | 탭 | 기능 |
 |----|------|
-| 기본 | 닉네임 수정, 비밀번호(placeholder), 로그아웃 |
-| 학습 목적 | 칩 선택/해제 (1~5개) |
-| 난이도 | lv.1~10 직접 설정, 역전 방지, 예문 미리보기, 재테스트 |
+| 기본 | 닉네임 수정 (버튼 전용, 자동저장 아님), 비밀번호(placeholder), 로그아웃 |
+| 학습 목적 | 칩 선택/해제 (0~5개, 0개 허용하되 저장은 1개 이상일 때만) |
+| 예문 난이도 | lv.1~10 직접 설정, 역전 방지, 예문 미리보기, 재테스트 |
 
-- **자동 저장**: 탭 전환 시 변경사항 감지 → PATCH 요청
+- **자동 저장**: 탭 전환 또는 화면 이탈(`useFocusEffect` cleanup) 시 변경사항 감지 → PATCH 요청
+- 닉네임은 자동저장 대상에서 제외 — "닉네임 변경" 버튼으로만 저장
 - 실패 시 토스트 메시지 표시
+
+#### 핵심 UX 규칙 (Sprint 04 확립)
+
+- **levelTestStore.reset() 시점**: 재테스트 진입 시(`ProfileScreen.handleRetakeTest`)에서만 호출. 결과 화면의 "다음"에서는 호출하지 않는다 — 회원가입 플로우에서 결과가 사라지는 버그 방지.
+- **프로필 완료 화면 뒤로가기 차단**: 단방향 플로우이므로 제스처/하드웨어 뒤로가기 비활성. 서버 저장 실패 시에도 store 업데이트로 메인 앱 진입 보장.
+- **프로필 설정 안내 화면**: 수평 카드 넘기기(5장 슬라이드), 마지막 장에서만 "문장 보러 가기" 버튼 활성.
+- **학습 목적 0개 허용**: 선택 해제 가능하되, 0개 상태에서는 다음 버튼 비활성 / 자동저장 미실행.
+- **로그인 시 프로필 동기화**: `login`/`tryAutoLogin` 성공 후 `profileCompleted === true`이면 `fetchProfile()` 호출해 store에 전체 프로필 반영.
 
 #### 구현된 엔드포인트
 
