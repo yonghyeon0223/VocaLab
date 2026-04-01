@@ -21,9 +21,9 @@ export async function extractWords(input: { type: 'text'; text: string } | { typ
   return res.data.data as { categories: ClassifiedWords; totalCount: number };
 }
 
-// AI 뜻 추출
+// AI 뜻 추출. 단어 수가 많으면 시간이 걸리므로 timeout을 120초로 설정.
 export async function extractMeanings(words: string[]) {
-  const res = await api.post('/api/word-sets/extract-meanings', { words });
+  const res = await api.post('/api/word-sets/extract-meanings', { words }, { timeout: 120000 });
   return res.data.data.meanings as Record<string, MeaningEntry[]>;
 }
 

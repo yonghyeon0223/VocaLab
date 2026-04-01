@@ -35,16 +35,31 @@ export default function WordSelectionScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
   const { categories, source } = route.params;
 
-  // 카테고리가 존재하는 것만 필터
+  // AI가 같은 단어를 여러 카테고리에 반환할 수 있으므로 중복을 제거한다.
+  // 우선순위: appropriate > hard > easy (적절 카테고리에 있으면 다른 곳에서 제거)
+  const deduped = (() => {
+    const seen = new Set<string>();
+    const result: Record<CategoryKey, string[]> = { easy: [], appropriate: [], hard: [] };
+    for (const key of ['appropriate', 'hard', 'easy'] as CategoryKey[]) {
+      for (const word of categories[key]) {
+        if (!seen.has(word)) {
+          seen.add(word);
+          result[key].push(word);
+        }
+      }
+    }
+    return result;
+  })();
+
   const activeCategories = (['easy', 'appropriate', 'hard'] as CategoryKey[])
-    .filter((key) => categories[key].length > 0);
+    .filter((key) => deduped[key].length > 0);
 
   // 선택 상태: 카테고리별 기본값 적용
   const [selected, setSelected] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = {};
     for (const key of activeCategories) {
       const defaultOn = CATEGORY_CONFIG[key].defaultSelected;
-      for (const word of categories[key]) {
+      for (const word of deduped[key]) {
         init[word] = defaultOn;
       }
     }
@@ -76,7 +91,7 @@ export default function WordSelectionScreen({ navigation, route }: Props) {
   }
 
   function toggleAll(key: CategoryKey) {
-    const words = categories[key];
+    const words = deduped[key];
     const allSelected = words.every((w) => selected[w]);
     setSelected((prev) => {
       const next = { ...prev };
@@ -117,12 +132,12 @@ export default function WordSelectionScreen({ navigation, route }: Props) {
       <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>학습할 단어를 선택하세요</Text>
         <Text style={styles.subtitle}>
-          {Object.values(categories).flat().length}개의 단어가 추출되었어요
+          {Object.values(deduped).flat().length}개의 단어가 추출되었어요
         </Text>
 
         {activeCategories.map((key) => {
           const config = CATEGORY_CONFIG[key];
-          const words = categories[key];
+          const words = deduped[key];
           const catSelectedCount = words.filter((w) => selected[w]).length;
           const allSelected = catSelectedCount === words.length;
           const isOpen = expanded[key];

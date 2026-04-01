@@ -127,7 +127,7 @@ async function callClaude(model: string, systemPrompt: string, userContent: unkn
     },
     body: JSON.stringify({
       model,
-      max_tokens: 4096,
+      max_tokens: 8192,
       system: systemPrompt,
       messages: [{ role: 'user', content: userContent }],
     }),
@@ -169,9 +169,13 @@ export async function extractAndClassifyWords(
   const categoryLabels = buildCategoryLabels(minAppropriate, maxAppropriate);
 
   const systemPrompt = `다음 텍스트에서 영단어와 숙어/구를 추출하고, 각 단어를 가장 적합한 카테고리에 분류해줘.
-관사, 전치사 등 기능어는 제외.
-중복 단어는 제거.
-모든 단어는 소문자로 정규화.
+
+규칙:
+- 관사(a, an, the), 전치사(in, on, at 등), 대명사(I, you, he 등), 접속사(and, but, or 등) 제외
+- 모든 단어는 원형(lemma)으로 정규화: 복수형→단수(genes→gene), 과거형→현재(determined→determine), 진행형→원형(running→run), 3인칭→원형(makes→make), 비교급/최상급→원형(bigger→big)
+- 같은 원형이 여러 번 등장하면 1번만 포함
+- 모든 단어는 소문자
+- 한 단어가 여러 카테고리에 걸치면 하나의 카테고리에만 배치 (적절 우선)
 
 난이도 기준 (쉬운 순서):
 ${levelTable}
@@ -179,7 +183,7 @@ ${levelTable}
 카테고리:
 ${categoryLabels}
 
-JSON으로 반환 (키: easy, appropriate, hard — 해당 카테고리가 없으면 빈 배열):
+JSON만 반환 (키: easy, appropriate, hard — 해당 카테고리가 없으면 빈 배열):
 { "easy": [...], "appropriate": [...], "hard": [...] }`;
 
   let userContent: unknown[];
