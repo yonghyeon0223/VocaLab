@@ -1,10 +1,15 @@
 import { ObjectId } from 'mongodb';
 import { getDB } from '../utils/db';
 
-type WordDoc = {
-  spelling: string;
+type WordMeaningDoc = {
+  definition: string;
   meaning: string;
   partOfSpeech: string;
+};
+
+type WordDoc = {
+  spelling: string;
+  meanings: WordMeaningDoc[];
 };
 
 function col() {
@@ -41,7 +46,7 @@ export async function insertWordSet(data: {
   };
 }
 
-// 목록 조회 시에는 words 배열을 제외해 전송량을 줄인다.
+// 목록 조회 시 words 배열 제외
 export async function findByUserId(userId: ObjectId) {
   return col()
     .find({ userId }, { projection: { words: 0 } })

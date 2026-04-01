@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-// 단어 추출 요청 스키마 (텍스트 or 사진)
 export const extractWordsSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('text'),
@@ -12,11 +11,15 @@ export const extractWordsSchema = z.discriminatedUnion('type', [
   }),
 ]);
 
-// 단어 세트 생성 요청 스키마 (words 배열에 meaning/partOfSpeech 내장)
-const wordSchema = z.object({
-  spelling: z.string(),
+const meaningSchema = z.object({
+  definition: z.string(),
   meaning: z.string(),
   partOfSpeech: z.string(),
+});
+
+const wordSchema = z.object({
+  spelling: z.string(),
+  meanings: z.array(meaningSchema).min(1),
 });
 
 export const createWordSetSchema = z.object({
@@ -29,7 +32,7 @@ export const createWordSetSchema = z.object({
         .max(30, '세트 이름은 30자 이하로 입력해주세요'),
     ),
   source: z.enum(['manual', 'photo']),
-  words: z.array(wordSchema).min(1, '최소 1개의 단어가 필요합니다').max(1000, '최대 1,000개까지 가능합니다'),
+  words: z.array(wordSchema).min(1, '최소 1개의 단어가 필요합니다').max(1000),
 });
 
 export type ExtractWordsInput = z.infer<typeof extractWordsSchema>;

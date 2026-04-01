@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../constants/colors';
 import { MainStackParamList } from '../navigation/MainTabNavigator';
+import { Word } from '../../../shared/types';
 import Button from '../components/ui/Button';
 
 type Props = {
@@ -13,97 +14,43 @@ type Props = {
   route: RouteProp<MainStackParamList, 'WordSelection'>;
 };
 
-type MeaningEntry = { meaning: string; partOfSpeech: string };
-type ExtractedWord = { spelling: string; meanings: MeaningEntry[] };
-
 const MAX_WORDS = 1000;
 
 export default function WordSelectionScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
   const { words, source } = route.params;
 
-  // 선택 상태: spelling -> meaning index -> boolean (기본 전체 선택)
-  const [selected, setSelected] = useState<Record<string, boolean[]>>(() => {
-    const init: Record<string, boolean[]> = {};
-    for (const w of words) {
-      init[w.spelling] = w.meanings.map(() => true);
-    }
-    return init;
-  });
-
-  // 선택된 총 뜻 수
-  const selectedCount = Object.values(selected).reduce(
-    (sum, arr) => sum + arr.filter(Boolean).length, 0,
+  // 단어 선택 상태 (spelling 기준)
+  const [selectedWords, setSelectedWords] = useState<Set<string>>(
+    () => new Set(words.map((w) => w.spelling)),
   );
 
-  function toggleMeaning(spelling: string, index: number) {
-    setSelected((prev) => {
-      const arr = [...prev[spelling]];
-      const totalMeanings = words.find((w) => w.spelling === spelling)!.meanings.length;
+  const selectedCount = selectedWords.size;
 
-      // 뜻이 1개뿐이면 단어 전체 토글
-      if (totalMeanings === 1) {
-        arr[0] = !arr[0];
-        return { ...prev, [spelling]: arr };
-      }
-
-      // 마지막 1개 선택 상태에서 해제 시도 → 단어 전체 해제
-      const currentSelected = arr.filter(Boolean).length;
-      if (arr[index] && currentSelected <= 1) {
-        return { ...prev, [spelling]: arr.map(() => false) };
-      }
-
-      arr[index] = !arr[index];
-      return { ...prev, [spelling]: arr };
-    });
-  }
-
-  // 단어 전체 토글 (헤더 탭)
   function toggleWord(spelling: string) {
-    setSelected((prev) => {
-      const arr = prev[spelling];
-      const allSelected = arr.some(Boolean);
-      return { ...prev, [spelling]: arr.map(() => !allSelected) };
+    setSelectedWords((prev) => {
+      const next = new Set(prev);
+      if (next.has(spelling)) {
+        next.delete(spelling);
+      } else if (next.size < MAX_WORDS) {
+        next.add(spelling);
+      }
+      return next;
     });
   }
 
   function selectAll() {
-    setSelected((prev) => {
-      const next = { ...prev };
-      for (const w of words) {
-        next[w.spelling] = w.meanings.map(() => true);
-      }
-      return next;
-    });
+    setSelectedWords(new Set(words.map((w) => w.spelling)));
   }
 
   function deselectAll() {
-    setSelected((prev) => {
-      const next = { ...prev };
-      for (const w of words) {
-        next[w.spelling] = w.meanings.map(() => false);
-      }
-      return next;
-    });
+    setSelectedWords(new Set());
   }
 
   function handleNext() {
-    // 선택된 뜻만 모아 Word 배열을 구성한다
-    const selectedWords: Array<{ spelling: string; meaning: string; partOfSpeech: string }> = [];
-    for (const w of words) {
-      const flags = selected[w.spelling];
-      for (let i = 0; i < w.meanings.length; i++) {
-        if (flags[i]) {
-          selectedWords.push({
-            spelling: w.spelling,
-            meaning: w.meanings[i].meaning,
-            partOfSpeech: w.meanings[i].partOfSpeech,
-          });
-        }
-      }
-    }
-    if (selectedWords.length < 1) return;
-    navigation.navigate('WordSetName', { source, words: selectedWords });
+    const selected = words.filter((w) => selectedWords.has(w.spelling));
+    if (selected.length < 1) return;
+    navigation.navigate('WordSetName', { source, words: selected });
   }
 
   return (
@@ -117,7 +64,6 @@ export default function WordSelectionScreen({ navigation, route }: Props) {
           <Text style={styles.hint}>20~30개가 학습에 적합해요</Text>
         )}
 
-        {/* 전체 선택/해제 */}
         <View style={styles.bulkRow}>
           <TouchableOpacity onPress={selectAll} activeOpacity={0.7}>
             <Text style={styles.bulkText}>전체 선택</Text>
@@ -127,57 +73,38 @@ export default function WordSelectionScreen({ navigation, route }: Props) {
           </TouchableOpacity>
         </View>
 
-        {/* 단어 목록 */}
         {words.map((w) => {
-          const flags = selected[w.spelling];
-          const isWordSelected = flags.some(Boolean);
-          const isMulti = w.meanings.length > 1;
-
+          const isSelected = selectedWords.has(w.spelling);
           return (
-            <View key={w.spelling} style={styles.wordCard}>
-              {/* 단어 헤더 */}
-              <TouchableOpacity
-                style={styles.wordHeader}
-                onPress={() => toggleWord(w.spelling)}
-                activeOpacity={0.7}
-              >
+            <TouchableOpacity
+              key={w.spelling}
+              style={styles.wordCard}
+              onPress={() => toggleWord(w.spelling)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.wordHeader}>
                 <Ionicons
-                  name={isWordSelected ? 'checkbox' : 'square-outline'}
+                  name={isSelected ? 'checkbox' : 'square-outline'}
                   size={22}
-                  color={isWordSelected ? colors.accent : colors.text.disabled}
+                  color={isSelected ? colors.accent : colors.text.disabled}
                 />
-                <Text style={[styles.wordSpelling, isWordSelected && styles.wordSpellingActive]}>
+                <Text style={[styles.wordSpelling, isSelected && styles.wordSpellingActive]}>
                   {w.spelling}
                 </Text>
-              </TouchableOpacity>
-
-              {/* 뜻 목록 */}
+              </View>
               {w.meanings.map((m, i) => (
-                <TouchableOpacity
-                  key={i}
-                  style={styles.meaningRow}
-                  onPress={() => toggleMeaning(w.spelling, i)}
-                  activeOpacity={0.7}
-                >
-                  {isMulti && (
-                    <Ionicons
-                      name={flags[i] ? 'checkbox' : 'square-outline'}
-                      size={18}
-                      color={flags[i] ? colors.accent : colors.text.disabled}
-                    />
-                  )}
-                  <Text style={[styles.meaningText, !flags[i] && styles.meaningTextOff]}>
+                <View key={i} style={styles.meaningRow}>
+                  <Text style={[styles.meaningText, !isSelected && styles.meaningTextOff]}>
                     {m.meaning}
                   </Text>
                   <Text style={styles.posTag}>{m.partOfSpeech}</Text>
-                </TouchableOpacity>
+                </View>
               ))}
-            </View>
+            </TouchableOpacity>
           );
         })}
       </ScrollView>
 
-      {/* 하단 */}
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
         <Text style={styles.selectedCount}>
           선택된 단어: <Text style={styles.selectedCountNum}>{selectedCount}개</Text>

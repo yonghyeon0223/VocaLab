@@ -36,11 +36,17 @@ export type TestSentence = {
   translation: string; // 한국어 번역
 };
 
-// 개별 영단어. wordSets 문서의 words 배열에 내장된다.
+// 단어의 개별 뜻. 영영 풀이 + 한국어 번역 + 품사를 포함한다.
+export type WordMeaning = {
+  definition: string;     // 영영 풀이 (Free Dictionary API 원본)
+  meaning: string;        // 한국어 뜻 (AI 번역)
+  partOfSpeech: string;   // 품사 (noun, verb, adj, adv, phrase 등)
+};
+
+// 개별 영단어. 하나의 spelling에 여러 뜻을 meanings 배열로 포함한다.
 export type Word = {
   spelling: string;       // 영단어 원형 (소문자 정규화)
-  meaning: string;        // 한국어 뜻 그룹 (예: "옳은, 정확한")
-  partOfSpeech: string;   // 품사 (noun, verb, adj, adv 등)
+  meanings: WordMeaning[];
 };
 
 // 단어 세트. words 배열을 문서 안에 내장(embed)한다.

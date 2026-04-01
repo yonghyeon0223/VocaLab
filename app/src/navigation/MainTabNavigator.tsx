@@ -15,18 +15,13 @@ import WordSetNameScreen from '../screens/WordSetNameScreen';
 import ProfileLevelTestScreen from '../screens/ProfileLevelTestScreen';
 import ProfileLevelResultScreen from '../screens/ProfileLevelResultScreen';
 
-type ExtractedWord = {
-  spelling: string;
-  meanings: Array<{ meaning: string; partOfSpeech: string }>;
-};
-
 // 메인 스택 전체에서 사용하는 파라미터 목록.
 export type MainStackParamList = {
   HomeTabs: undefined;
   WordSetInputMethod: undefined;
   WordSetTextInput: undefined;
   WordSetPhotoInput: undefined;
-  WordSelection: { words: ExtractedWord[]; source: 'manual' | 'photo' };
+  WordSelection: { words: Word[]; source: 'manual' | 'photo' };
   WordSetName: { source: 'manual' | 'photo'; words: Word[] };
   RetestLevel: undefined;
   RetestResult: undefined;

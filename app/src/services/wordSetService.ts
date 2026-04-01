@@ -2,17 +2,12 @@ import api from './api';
 import { useWordSetStore } from '../stores/wordSetStore';
 import { WordSet, Word } from '../../../shared/types';
 
-// --- AI ---
+// --- AI + Dictionary ---
 
-type ExtractedWord = {
-  spelling: string;
-  meanings: Array<{ meaning: string; partOfSpeech: string }>;
-};
-
-// AI 단어 추출 (단어 + 뜻 + 품사 한 번에). 사진 입력 시 시간이 걸리므로 timeout 120초.
+// 단어 추출 (AI → Free Dictionary → AI 번역). 시간이 걸리므로 timeout 120초.
 export async function extractWords(input: { type: 'text'; text: string } | { type: 'photo'; images: string[] }) {
   const res = await api.post('/api/word-sets/extract', input, { timeout: 120000 });
-  return res.data.data as { words: ExtractedWord[] };
+  return res.data.data as { words: Word[] };
 }
 
 // --- CRUD ---
