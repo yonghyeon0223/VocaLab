@@ -32,6 +32,7 @@ export default function WordSetPhotoInputScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const [photos, setPhotos] = useState<string[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [wordCount, setWordCount] = useState(20);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -85,7 +86,7 @@ export default function WordSetPhotoInputScreen({ navigation }: Props) {
         images.push(base64);
       }
 
-      const result = await extractWords({ type: 'photo', images });
+      const result = await extractWords({ type: 'photo', images, wordCount });
       if (result.words.length < 1) {
         setError('추출할 수 있는 단어가 없어요. 다른 사진을 촬영해보세요.');
         return;
@@ -153,6 +154,28 @@ export default function WordSetPhotoInputScreen({ navigation }: Props) {
           <Ionicons name="image-outline" size={22} color={colors.accent} />
           <Text style={styles.actionBtnText}>갤러리</Text>
         </TouchableOpacity>
+      </View>
+
+      {/* 추출할 단어 수 */}
+      <View style={styles.wordCountRow}>
+        <Text style={styles.wordCountLabel}>추출할 핵심 단어 수</Text>
+        <View style={styles.wordCountControl}>
+          <TouchableOpacity
+            onPress={() => setWordCount((v) => Math.max(1, v - 5))}
+            style={styles.wordCountBtn}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.wordCountBtnText}>−</Text>
+          </TouchableOpacity>
+          <Text style={styles.wordCountValue}>{wordCount}개</Text>
+          <TouchableOpacity
+            onPress={() => setWordCount((v) => Math.min(100, v + 5))}
+            style={styles.wordCountBtn}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.wordCountBtnText}>+</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -251,6 +274,42 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: colors.accent,
+  },
+  wordCountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+  },
+  wordCountLabel: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: colors.text.primary,
+  },
+  wordCountControl: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  wordCountBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.background.secondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  wordCountBtnText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.accent,
+  },
+  wordCountValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.accent,
+    minWidth: 40,
+    textAlign: 'center',
   },
   error: {
     fontSize: 14,

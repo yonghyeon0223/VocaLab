@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Text,
   TextInput as RNTextInput,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -25,6 +26,7 @@ const MAX_CHARS = 50000;
 export default function WordSetTextInputScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const [text, setText] = useState('');
+  const [wordCount, setWordCount] = useState(20);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -36,7 +38,7 @@ export default function WordSetTextInputScreen({ navigation }: Props) {
     setLoading(true);
     setError('');
     try {
-      const result = await extractWords({ type: 'text', text: trimmed });
+      const result = await extractWords({ type: 'text', text: trimmed, wordCount });
       if (result.words.length < 1) {
         setError('추출할 수 있는 단어가 없어요. 다른 텍스트를 입력해보세요.');
         return;
@@ -77,6 +79,28 @@ export default function WordSetTextInputScreen({ navigation }: Props) {
         />
 
         <Text style={styles.counter}>{trimmed.length.toLocaleString()} / {MAX_CHARS.toLocaleString()}자</Text>
+
+        {/* 추출할 단어 수 */}
+        <View style={styles.wordCountRow}>
+          <Text style={styles.wordCountLabel}>추출할 핵심 단어 수</Text>
+          <View style={styles.wordCountControl}>
+            <TouchableOpacity
+              onPress={() => setWordCount((v) => Math.max(1, v - 5))}
+              style={styles.wordCountBtn}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.wordCountBtnText}>−</Text>
+            </TouchableOpacity>
+            <Text style={styles.wordCountValue}>{wordCount}개</Text>
+            <TouchableOpacity
+              onPress={() => setWordCount((v) => Math.min(100, v + 5))}
+              style={styles.wordCountBtn}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.wordCountBtnText}>+</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
       </ScrollView>
@@ -134,6 +158,41 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.text.secondary,
     textAlign: 'right',
+  },
+  wordCountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  wordCountLabel: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: colors.text.primary,
+  },
+  wordCountControl: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  wordCountBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.background.secondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  wordCountBtnText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.accent,
+  },
+  wordCountValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.accent,
+    minWidth: 40,
+    textAlign: 'center',
   },
   error: {
     fontSize: 14,

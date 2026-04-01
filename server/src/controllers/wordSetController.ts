@@ -9,7 +9,8 @@ export async function extractWords(req: Request, res: Response, next: NextFuncti
     if (!req.userId) return next(new AppError('UNAUTHORIZED', 401, '인증이 필요합니다'));
 
     const data = extractWordsSchema.parse(req.body);
-    const result = await wordSetService.extractWords(req.userId, data);
+    const { wordCount, ...input } = data;
+    const result = await wordSetService.extractWords(req.userId, input, wordCount);
 
     res.json({ success: true, data: result });
   } catch (err) {

@@ -4,9 +4,11 @@ import { WordSet, Word } from '../../../shared/types';
 
 // --- AI + Dictionary ---
 
-// 단어 추출 (AI → Free Dictionary → AI 번역). 3단계 파이프라인이므로 timeout 180초.
-export async function extractWords(input: { type: 'text'; text: string } | { type: 'photo'; images: string[] }) {
-  const res = await api.post('/api/word-sets/extract', input, { timeout: 180000 });
+// AI 단일 호출로 N개 핵심 단어 + 뜻 + 품사 추출. timeout 120초.
+export async function extractWords(
+  input: { type: 'text'; text: string; wordCount: number } | { type: 'photo'; images: string[]; wordCount: number },
+) {
+  const res = await api.post('/api/word-sets/extract', input, { timeout: 120000 });
   return res.data.data as { words: Word[] };
 }
 

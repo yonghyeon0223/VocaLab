@@ -1,7 +1,6 @@
 import { ObjectId } from 'mongodb';
 import * as wordSetRepository from '../repositories/wordSetRepository';
 import * as aiService from './aiService';
-import * as dictionaryService from './dictionaryService';
 import * as userRepository from '../repositories/userRepository';
 import { AppError } from '../utils/AppError';
 
@@ -14,7 +13,6 @@ type WordInput = {
   }>;
 };
 
-// 단어 세트를 생성한다. words 배열을 문서에 내장한다.
 export async function createWordSet(
   userId: string,
   name: string,
@@ -24,8 +22,8 @@ export async function createWordSet(
   if (words.length < 1) {
     throw new AppError('INVALID_WORD_COUNT', 400, '최소 1개의 단어가 필요합니다');
   }
-  if (words.length > 1000) {
-    throw new AppError('INVALID_WORD_COUNT', 400, '최대 1,000개까지 가능합니다');
+  if (words.length > 100) {
+    throw new AppError('INVALID_WORD_COUNT', 400, '최대 100개까지 가능합니다');
   }
 
   return wordSetRepository.insertWordSet({
@@ -62,55 +60,16 @@ export async function deleteWordSet(userId: string, setId: string) {
   await wordSetRepository.deleteById(new ObjectId(setId));
 }
 
-// AI 단어 추출 → Free Dictionary 영영 뜻 → AI 한국어 번역
+// AI 단일 호출로 N개 핵심 단어 + 뜻 + 품사 추출
 export async function extractWords(
   userId: string,
   input: { type: 'text'; text: string } | { type: 'photo'; images: string[] },
+  wordCount: number,
 ) {
   const user = await userRepository.findById(new ObjectId(userId));
   if (!user) throw new AppError('USER_NOT_FOUND', 404, '유저를 찾을 수 없습니다');
 
   const activeLevel = (user.activeLevel as number) ?? 5;
 
-  // 1단계: AI가 spelling만 추출
-  console.log('[extract] 1단계: AI 단어 추출 시작');
-  const spellings = await aiService.extractSpellings(input, activeLevel);
-  console.log(`[extract] 1단계 완료: ${spellings.length}개 단어 추출`);
-  console.log('[extract] 추출된 단어:', spellings);
-
-  if (spellings.length === 0) {
-    return { words: [] };
-  }
-
-  // 2단계: Free Dictionary API로 영영 뜻 조회
-  console.log('[extract] 2단계: Dictionary 조회 시작');
-  const dictionaryResults = await dictionaryService.lookupWords(spellings);
-
-  const found = dictionaryResults.filter((r) => r.meanings.length > 0);
-  const notFound = dictionaryResults.filter((r) => r.meanings.length === 0).map((r) => r.spelling);
-  const totalDefs = found.reduce((sum, r) => sum + r.meanings.length, 0);
-
-  console.log(`[extract] 2단계 완료: ${found.length}/${spellings.length}개 사전 발견, 총 ${totalDefs}개 뜻`);
-  console.log('[extract] 사전에서 못 찾은 단어:', notFound);
-  console.log('[extract] 단어별 뜻 수:', found.map((r) => `${r.spelling}(${r.meanings.length})`).join(', '));
-
-  // 뜻이 너무 많으면 단어당 최대 5개로 제한 (토큰 초과 방지)
-  const trimmed = found.map((r) => ({
-    spelling: r.spelling,
-    meanings: r.meanings.slice(0, 5),
-  }));
-
-  const trimmedTotalDefs = trimmed.reduce((sum, r) => sum + r.meanings.length, 0);
-  console.log(`[extract] 번역 대상: ${trimmed.length}개 단어, ${trimmedTotalDefs}개 뜻`);
-
-  // 3단계: AI가 영영 뜻을 한국어로 번역
-  console.log('[extract] 3단계: AI 번역 시작');
-  try {
-    const translated = await aiService.translateMeanings(trimmed);
-    console.log(`[extract] 3단계 완료: ${translated.length}개 단어 번역`);
-    return { words: translated };
-  } catch (err) {
-    console.error('[extract] 3단계 실패:', err);
-    throw err;
-  }
+  return aiService.extractWords(input, activeLevel, wordCount);
 }

@@ -1,6 +1,13 @@
 import { ENV } from '../utils/env';
 import { LEVEL_LABELS } from './levelLabels';
 
+// --- 타입 ---
+
+type ExtractedWord = {
+  spelling: string;
+  meanings: Array<{ definition: string; meaning: string; partOfSpeech: string }>;
+};
+
 // --- Claude API 호출 ---
 
 async function callClaude(model: string, systemPrompt: string, userContent: unknown[]) {
@@ -33,46 +40,57 @@ async function callClaude(model: string, systemPrompt: string, userContent: unkn
   return JSON.parse(jsonMatch[1]);
 }
 
-// --- 1차: 단어 추출 (spelling만) ---
+// --- 단어 추출 (단일 호출) ---
 
-function buildExtractionPrompt(activeLevel: number) {
+// 프롬프트는 추후 교체 예정. 현재는 플레이스홀더.
+function buildPrompt(activeLevel: number, wordCount: number) {
   return `너는 한국인 영어 학습자를 위한 단어 추출기야.
-유저가 입력한 내용에서 "외울 가치가 있는 영단어, 숙어, 표현"의 spelling만 추출해.
+유저가 입력한 내용에서 외울 가치가 있는 핵심 영단어를 정확히 ${wordCount}개 골라내고,
+각 단어의 영영 풀이, 한국어 뜻, 품사를 제공해.
 
 [학습자 수준]
 이 유저는 한국 영어 교과서 기준 ${LEVEL_LABELS[activeLevel]} 수준이야.
 이 수준과 같거나 더 어려운 단어만 추출해.
 
-[1단계] 입력 유형 판단
-- 단어 나열 → 그대로 수집
-- 단어장/어휘집 → 학습 대상 단어만 추출
-- 시험지/교재 → 핵심 단어와 보기만. 지시문 속 단어 제외
-- 지문/기사/에세이 → 핵심 어휘 위주
-- 가사/대본/대화문 → 실생활 표현과 어휘 위주
-- 혼합 → 각 부분에 맞는 전략 적용
-- 영어 아님 / 판독 불가 → 빈 배열
-
-[2단계] 추출 규칙
-- 숙어/표현은 통째로 (look for, break down, in fact 등)
+[추출 규칙]
+- 숙어/표현은 통째로 (look for, break down 등)
 - 기능어 제외 (관사, 전치사, 대명사, 접속사, 조동사). 숙어 일부는 포함
-- 초기본 동사 제외 (be, have, do, go, come, get, make, take, give, say, know, see, want, think, tell). 특수 뜻이나 숙어 일부는 포함
+- 초기본 동사 제외 (be, have, do, go, come, get, make, take, give, say, know, see, want, think, tell). 특수 뜻이나 숙어는 포함
 - 원형(lemma) 정규화, 고유명사 제외, 중복 제거, 소문자
 
+[뜻 규칙]
+- 각 단어의 meanings 배열에 뜻을 넣어줘
+- definition: 영어 풀이
+- meaning: 한국어 번역 (학생이 쉽게 이해할 수 있게)
+- partOfSpeech: noun, verb, adj, adv, phrase 중 하나
+- 품사가 다르면 별도 객체 (예: doubt → 의심하다 verb + 의심 noun)
+- 같은 품사라도 뜻이 다르면 별도 객체 (예: sense → 감각 noun + 의미 noun)
+
 JSON만 반환:
-{ "words": ["단어1", "단어2", ...] }`;
+{
+  "words": [
+    {
+      "spelling": "단어",
+      "meanings": [
+        { "definition": "영영 풀이", "meaning": "한국어 뜻", "partOfSpeech": "품사" }
+      ]
+    }
+  ]
+}`;
 }
 
-export async function extractSpellings(
+export async function extractWords(
   input: { type: 'text'; text: string } | { type: 'photo'; images: string[] },
   activeLevel: number,
-): Promise<string[]> {
-  const systemPrompt = buildExtractionPrompt(activeLevel);
+  wordCount: number,
+): Promise<{ words: ExtractedWord[] }> {
+  const systemPrompt = buildPrompt(activeLevel, wordCount);
 
   let userContent: unknown[];
   let model: string;
 
   if (input.type === 'text') {
-    model = 'claude-haiku-4-5-20241022';
+    model = 'claude-haiku-4-5-20251001';
     userContent = [{ type: 'text', text: input.text }];
   } else {
     model = 'claude-sonnet-4-20250514';
@@ -84,52 +102,7 @@ export async function extractSpellings(
   }
 
   const result = await callClaude(model, systemPrompt, userContent);
-  return Array.isArray(result.words) ? result.words : [];
-}
+  const words: ExtractedWord[] = Array.isArray(result.words) ? result.words : [];
 
-// --- 2차: 영영 뜻 → 한국어 번역 ---
-
-type DictionaryEntry = {
-  spelling: string;
-  meanings: Array<{ definition: string; partOfSpeech: string }>;
-};
-
-type TranslatedWord = {
-  spelling: string;
-  meanings: Array<{ definition: string; meaning: string; partOfSpeech: string }>;
-};
-
-export async function translateMeanings(entries: DictionaryEntry[]): Promise<TranslatedWord[]> {
-  // 사전에서 뜻을 찾지 못한 단어는 제외
-  const withMeanings = entries.filter((e) => e.meanings.length > 0);
-  if (withMeanings.length === 0) return [];
-
-  const systemPrompt = `아래 영단어들의 영영 풀이를 한국어로 번역해줘.
-각 뜻을 학생이 가장 쉽게 이해할 수 있는 자연스러운 한국어 한 단어 또는 짧은 구로 번역해.
-영영 풀이 원문은 그대로 유지하고, meaning 필드에 한국어 번역만 추가해.
-
-JSON만 반환:
-{
-  "words": [
-    {
-      "spelling": "단어",
-      "meanings": [
-        { "definition": "영영 원문 그대로", "meaning": "한국어 번역", "partOfSpeech": "품사" }
-      ]
-    }
-  ]
-}`;
-
-  const input = withMeanings.map((e) => ({
-    spelling: e.spelling,
-    meanings: e.meanings.map((m) => ({
-      definition: m.definition,
-      partOfSpeech: m.partOfSpeech,
-    })),
-  }));
-
-  const userContent = [{ type: 'text', text: JSON.stringify(input) }];
-  const result = await callClaude('claude-haiku-4-5-20241022', systemPrompt, userContent);
-
-  return Array.isArray(result.words) ? result.words : [];
+  return { words };
 }
