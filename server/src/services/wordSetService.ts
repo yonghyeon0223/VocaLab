@@ -70,6 +70,7 @@ export async function extractWords(
   if (!user) throw new AppError('USER_NOT_FOUND', 404, '유저를 찾을 수 없습니다');
 
   const activeLevel = (user.activeLevel as number) ?? 5;
+  const purposes = (user.purposes as string[]) ?? [];
 
-  return aiService.extractWords(input, activeLevel, wordCount);
+  return aiService.extractWords(input, activeLevel, wordCount, purposes);
 }

@@ -42,37 +42,48 @@ async function callClaude(model: string, systemPrompt: string, userContent: unkn
 
 // --- 단어 추출 (단일 호출) ---
 
-// 프롬프트는 추후 교체 예정. 현재는 플레이스홀더.
-function buildPrompt(activeLevel: number, wordCount: number) {
-  return `너는 한국인 영어 학습자를 위한 단어 추출기야.
-유저가 입력한 내용에서 외울 가치가 있는 핵심 영단어를 정확히 ${wordCount}개 골라내고,
-각 단어의 영영 풀이, 한국어 뜻, 품사를 제공해.
+function buildPrompt(activeLevel: number, wordCount: number, purposes: string[]) {
+  const purposeStr = purposes.length > 0
+    ? `This student's learning goals: ${purposes.join(', ')}.`
+    : '';
 
-[학습자 수준]
-이 유저는 한국 영어 교과서 기준 ${LEVEL_LABELS[activeLevel]} 수준이야.
-이 수준과 같거나 더 어려운 단어만 추출해.
+  return `You are a vocabulary extraction assistant for a Korean English learner.
 
-[추출 규칙]
-- 숙어/표현은 통째로 (look for, break down 등)
-- 기능어 제외 (관사, 전치사, 대명사, 접속사, 조동사). 숙어 일부는 포함
-- 초기본 동사 제외 (be, have, do, go, come, get, make, take, give, say, know, see, want, think, tell). 특수 뜻이나 숙어는 포함
-- 원형(lemma) 정규화, 고유명사 제외, 중복 제거, 소문자
+[Task]
+Extract up to ${wordCount} high-priority English words/phrases from the user's input.
+Prioritize words that are most essential to understanding the passage or context.
+If the input is simply a word list or lacks clear context, select the ${wordCount} most valuable words you would recommend for a student aiming to achieve their learning goals.
 
-[뜻 규칙]
-- 각 단어의 meanings 배열에 뜻을 넣어줘
-- definition: 영어 풀이
-- meaning: 한국어 번역 (학생이 쉽게 이해할 수 있게)
-- partOfSpeech: noun, verb, adj, adv, phrase 중 하나
-- 품사가 다르면 별도 객체 (예: doubt → 의심하다 verb + 의심 noun)
-- 같은 품사라도 뜻이 다르면 별도 객체 (예: sense → 감각 noun + 의미 noun)
+[Student Profile]
+- English level: ${LEVEL_LABELS[activeLevel]} (based on Korean school curriculum)
+${purposeStr}
+- Extract words appropriate for this level — not too easy, not too difficult.
+  Use your judgment based on the level description above.
 
-JSON만 반환:
+[Extraction Rules]
+- Extract phrases when the words are better memorized together (e.g. "break down", "look for", "at all")
+- Normalize to lemma form (e.g. running→run, genes→gene, bigger→big)
+- Exclude function words (articles, prepositions, pronouns, conjunctions, auxiliary verbs) unless part of a phrase
+- Exclude very basic verbs (be, have, do, go, come, get, make, take, give, say, know, see, want, think, tell) unless they carry a special meaning or are part of a phrase
+- Exclude proper nouns, deduplicate, lowercase
+- If fewer than ${wordCount} extractable words exist, return however many you can find
+
+[Definition Rules]
+- For each word, provide 2-3 Korean definitions in the meanings array
+- Each meaning must be a separate object with definition (English), meaning (Korean), and partOfSpeech
+- Favor definitions that show different contexts or different parts of speech
+  e.g. "doubt" → [{verb: "의심하다"}, {noun: "의심"}]
+  e.g. "sense" → [{noun: "감각"}, {noun: "의미"}, {verb: "감지하다"}]
+- partOfSpeech must be one of: noun, verb, adj, adv, phrase
+- Korean meanings should be natural and easy for a student to understand
+
+Return JSON only (no explanation):
 {
   "words": [
     {
-      "spelling": "단어",
+      "spelling": "word",
       "meanings": [
-        { "definition": "영영 풀이", "meaning": "한국어 뜻", "partOfSpeech": "품사" }
+        { "definition": "English definition", "meaning": "한국어 뜻", "partOfSpeech": "pos" }
       ]
     }
   ]
@@ -83,8 +94,9 @@ export async function extractWords(
   input: { type: 'text'; text: string } | { type: 'photo'; images: string[] },
   activeLevel: number,
   wordCount: number,
+  purposes: string[],
 ): Promise<{ words: ExtractedWord[] }> {
-  const systemPrompt = buildPrompt(activeLevel, wordCount);
+  const systemPrompt = buildPrompt(activeLevel, wordCount, purposes);
 
   let userContent: unknown[];
   let model: string;
