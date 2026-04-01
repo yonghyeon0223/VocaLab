@@ -76,6 +76,7 @@ export async function extractWords(
   console.log('[extract] 1단계: AI 단어 추출 시작');
   const spellings = await aiService.extractSpellings(input, activeLevel);
   console.log(`[extract] 1단계 완료: ${spellings.length}개 단어 추출`);
+  console.log('[extract] 추출된 단어:', spellings);
 
   if (spellings.length === 0) {
     return { words: [] };
@@ -84,20 +85,32 @@ export async function extractWords(
   // 2단계: Free Dictionary API로 영영 뜻 조회
   console.log('[extract] 2단계: Dictionary 조회 시작');
   const dictionaryResults = await dictionaryService.lookupWords(spellings);
-  const withMeanings = dictionaryResults.filter((r) => r.meanings.length > 0);
-  const totalDefs = withMeanings.reduce((sum, r) => sum + r.meanings.length, 0);
-  console.log(`[extract] 2단계 완료: ${withMeanings.length}/${spellings.length}개 사전 발견, 총 ${totalDefs}개 뜻`);
+
+  const found = dictionaryResults.filter((r) => r.meanings.length > 0);
+  const notFound = dictionaryResults.filter((r) => r.meanings.length === 0).map((r) => r.spelling);
+  const totalDefs = found.reduce((sum, r) => sum + r.meanings.length, 0);
+
+  console.log(`[extract] 2단계 완료: ${found.length}/${spellings.length}개 사전 발견, 총 ${totalDefs}개 뜻`);
+  console.log('[extract] 사전에서 못 찾은 단어:', notFound);
+  console.log('[extract] 단어별 뜻 수:', found.map((r) => `${r.spelling}(${r.meanings.length})`).join(', '));
 
   // 뜻이 너무 많으면 단어당 최대 5개로 제한 (토큰 초과 방지)
-  const trimmed = withMeanings.map((r) => ({
+  const trimmed = found.map((r) => ({
     spelling: r.spelling,
     meanings: r.meanings.slice(0, 5),
   }));
 
+  const trimmedTotalDefs = trimmed.reduce((sum, r) => sum + r.meanings.length, 0);
+  console.log(`[extract] 번역 대상: ${trimmed.length}개 단어, ${trimmedTotalDefs}개 뜻`);
+
   // 3단계: AI가 영영 뜻을 한국어로 번역
   console.log('[extract] 3단계: AI 번역 시작');
-  const translated = await aiService.translateMeanings(trimmed);
-  console.log(`[extract] 3단계 완료: ${translated.length}개 단어 번역`);
-
-  return { words: translated };
+  try {
+    const translated = await aiService.translateMeanings(trimmed);
+    console.log(`[extract] 3단계 완료: ${translated.length}개 단어 번역`);
+    return { words: translated };
+  } catch (err) {
+    console.error('[extract] 3단계 실패:', err);
+    throw err;
+  }
 }
