@@ -7,7 +7,6 @@ import {
   StyleSheet,
   Text,
   TextInput as RNTextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -21,12 +20,13 @@ type Props = {
   navigation: NativeStackNavigationProp<MainStackParamList, 'WordSetTextInput'>;
 };
 
-const MAX_CHARS = 50000;
+const MAX_CHARS = 5000;
 
 export default function WordSetTextInputScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const [text, setText] = useState('');
-  const [wordCount, setWordCount] = useState(20);
+  const [wordCountText, setWordCountText] = useState('20');
+  const wordCount = Math.min(100, Math.max(1, parseInt(wordCountText, 10) || 1));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -84,21 +84,16 @@ export default function WordSetTextInputScreen({ navigation }: Props) {
         <View style={styles.wordCountRow}>
           <Text style={styles.wordCountLabel}>추출할 핵심 단어 수</Text>
           <View style={styles.wordCountControl}>
-            <TouchableOpacity
-              onPress={() => setWordCount((v) => Math.max(1, v - 5))}
-              style={styles.wordCountBtn}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.wordCountBtnText}>−</Text>
-            </TouchableOpacity>
-            <Text style={styles.wordCountValue}>{wordCount}개</Text>
-            <TouchableOpacity
-              onPress={() => setWordCount((v) => Math.min(100, v + 5))}
-              style={styles.wordCountBtn}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.wordCountBtnText}>+</Text>
-            </TouchableOpacity>
+            <RNTextInput
+              style={styles.wordCountInput}
+              value={wordCountText}
+              onChangeText={setWordCountText}
+              keyboardType="number-pad"
+              maxLength={3}
+              textAlign="center"
+              selectTextOnFocus
+            />
+            <Text style={styles.wordCountUnit}>개 (최대 100)</Text>
           </View>
         </View>
 
@@ -172,27 +167,22 @@ const styles = StyleSheet.create({
   wordCountControl: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 8,
   },
-  wordCountBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  wordCountInput: {
+    width: 56,
+    height: 40,
+    borderRadius: 10,
     backgroundColor: colors.background.secondary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  wordCountBtnText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.accent,
-  },
-  wordCountValue: {
+    borderWidth: 1,
+    borderColor: colors.border.default,
     fontSize: 16,
     fontWeight: '600',
     color: colors.accent,
-    minWidth: 40,
-    textAlign: 'center',
+  },
+  wordCountUnit: {
+    fontSize: 14,
+    color: colors.text.secondary,
   },
   error: {
     fontSize: 14,

@@ -4,12 +4,12 @@ import { z } from 'zod';
 export const extractWordsSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('text'),
-    text: z.string().min(1, '텍스트를 입력해주세요').max(50000),
+    text: z.string().min(1, '텍스트를 입력해주세요').max(5000),
     wordCount: z.number().int().min(1).max(100),
   }),
   z.object({
     type: z.literal('photo'),
-    images: z.array(z.string()).min(1).max(10),
+    images: z.array(z.string()).min(1).max(5),
     wordCount: z.number().int().min(1).max(100),
   }),
 ]);

@@ -7,6 +7,7 @@ import {
   Image,
   StyleSheet,
   Text,
+  TextInput as RNTextInput,
   TouchableOpacity,
   View,
   ViewToken,
@@ -25,14 +26,15 @@ type Props = {
   navigation: NativeStackNavigationProp<MainStackParamList, 'WordSetPhotoInput'>;
 };
 
-const MAX_PHOTOS = 10;
+const MAX_PHOTOS = 5;
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function WordSetPhotoInputScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const [photos, setPhotos] = useState<string[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [wordCount, setWordCount] = useState(20);
+  const [wordCountText, setWordCountText] = useState('20');
+  const wordCount = Math.min(100, Math.max(1, parseInt(wordCountText, 10) || 1));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -58,12 +60,18 @@ export default function WordSetPhotoInputScreen({ navigation }: Props) {
       return;
     }
 
+    const remaining = MAX_PHOTOS - photos.length;
     const result = fromCamera
       ? await ImagePicker.launchCameraAsync({ quality: 0.8 })
-      : await ImagePicker.launchImageLibraryAsync({ quality: 0.8 });
+      : await ImagePicker.launchImageLibraryAsync({
+          quality: 0.8,
+          allowsMultipleSelection: true,
+          selectionLimit: remaining,
+        });
 
-    if (!result.canceled && result.assets[0]) {
-      setPhotos((prev) => [...prev, result.assets[0].uri]);
+    if (!result.canceled && result.assets.length > 0) {
+      const newUris = result.assets.map((a) => a.uri).slice(0, remaining);
+      setPhotos((prev) => [...prev, ...newUris]);
     }
   }
 
@@ -160,21 +168,16 @@ export default function WordSetPhotoInputScreen({ navigation }: Props) {
       <View style={styles.wordCountRow}>
         <Text style={styles.wordCountLabel}>추출할 핵심 단어 수</Text>
         <View style={styles.wordCountControl}>
-          <TouchableOpacity
-            onPress={() => setWordCount((v) => Math.max(1, v - 5))}
-            style={styles.wordCountBtn}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.wordCountBtnText}>−</Text>
-          </TouchableOpacity>
-          <Text style={styles.wordCountValue}>{wordCount}개</Text>
-          <TouchableOpacity
-            onPress={() => setWordCount((v) => Math.min(100, v + 5))}
-            style={styles.wordCountBtn}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.wordCountBtnText}>+</Text>
-          </TouchableOpacity>
+          <RNTextInput
+            style={styles.wordCountInput}
+            value={wordCountText}
+            onChangeText={setWordCountText}
+            keyboardType="number-pad"
+            maxLength={3}
+            textAlign="center"
+            selectTextOnFocus
+          />
+          <Text style={styles.wordCountUnit}>개 (최대 100)</Text>
         </View>
       </View>
 
@@ -289,27 +292,22 @@ const styles = StyleSheet.create({
   wordCountControl: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 8,
   },
-  wordCountBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  wordCountInput: {
+    width: 56,
+    height: 40,
+    borderRadius: 10,
     backgroundColor: colors.background.secondary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  wordCountBtnText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.accent,
-  },
-  wordCountValue: {
+    borderWidth: 1,
+    borderColor: colors.border.default,
     fontSize: 16,
     fontWeight: '600',
     color: colors.accent,
-    minWidth: 40,
-    textAlign: 'center',
+  },
+  wordCountUnit: {
+    fontSize: 14,
+    color: colors.text.secondary,
   },
   error: {
     fontSize: 14,
