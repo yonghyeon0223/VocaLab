@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import {
-  KeyboardAvoidingView,
   Modal,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -14,6 +12,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../constants/colors';
+import { POS_OPTIONS, POS_LABELS } from '../constants/pos';
 import { MainStackParamList } from '../navigation/MainTabNavigator';
 import { Word } from '../../../shared/types';
 import Button from '../components/ui/Button';
@@ -27,8 +26,6 @@ type DraftWord = {
   meaning: string;
   partOfSpeech: string;
 };
-
-import { POS_OPTIONS, POS_LABELS } from '../constants/pos';
 
 export default function WordSetManualEntryScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
@@ -53,12 +50,15 @@ export default function WordSetManualEntryScreen({ navigation }: Props) {
     setWords((prev) => prev.filter((_, i) => i !== index));
   }
 
+  // 현재 마지막 단어가 미완성이면 추가 불가
+  const lastWord = words[words.length - 1];
+  const lastComplete = !!(lastWord.spelling.trim() && lastWord.meaning.trim());
+  const canAddMore = lastComplete && words.length < 100;
+
   function handleNext() {
-    // 유효한 단어만 필터
     const valid = words.filter((w) => w.spelling.trim() && w.meaning.trim());
     if (valid.length < 1) return;
 
-    // Word 구조로 변환 — 같은 spelling은 meanings를 합침
     const wordMap = new Map<string, Word>();
     for (const w of valid) {
       const spelling = w.spelling.trim().toLowerCase();
@@ -84,12 +84,9 @@ export default function WordSetManualEntryScreen({ navigation }: Props) {
   const validCount = words.filter((w) => w.spelling.trim() && w.meaning.trim()).length;
 
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <ScrollView
-        contentContainerStyle={[styles.body, { paddingTop: insets.top + 20 }]}
+        contentContainerStyle={[styles.body, { paddingBottom: Math.max(insets.bottom, 16) + 16 }]}
         keyboardShouldPersistTaps="handled"
       >
         <Text style={styles.title}>단어를 직접 입력하세요</Text>
@@ -113,6 +110,9 @@ export default function WordSetManualEntryScreen({ navigation }: Props) {
               placeholder="영단어 또는 표현"
               placeholderTextColor={colors.text.disabled}
               autoCapitalize="none"
+              autoCorrect={false}
+              inputMode="text"
+              textContentType="none"
             />
 
             <RNTextInput
@@ -123,21 +123,36 @@ export default function WordSetManualEntryScreen({ navigation }: Props) {
               placeholderTextColor={colors.text.disabled}
             />
 
+            {/* 품사 드롭다운 — 가운데 배치 */}
             <TouchableOpacity
               style={styles.posSelector}
               onPress={() => setPosPickerIndex(i)}
               activeOpacity={0.7}
             >
               <Text style={styles.posSelectorText}>{POS_LABELS[w.partOfSpeech] ?? w.partOfSpeech}</Text>
-              <Ionicons name="chevron-down" size={16} color={colors.text.secondary} />
+              <Ionicons name="chevron-down" size={16} color={colors.accent} />
             </TouchableOpacity>
           </View>
         ))}
 
-        <TouchableOpacity style={styles.addButton} onPress={addWord} activeOpacity={0.7}>
-          <Ionicons name="add-circle-outline" size={20} color={colors.accent} />
-          <Text style={styles.addButtonText}>단어 추가</Text>
+        {/* 단어 추가 버튼 */}
+        <TouchableOpacity
+          style={[styles.addButton, !canAddMore && styles.addButtonDisabled]}
+          onPress={addWord}
+          disabled={!canAddMore}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="add-circle-outline" size={20} color={canAddMore ? colors.accent : colors.text.disabled} />
+          <Text style={[styles.addButtonText, !canAddMore && styles.addButtonTextDisabled]}>
+            {!lastComplete ? '위 단어를 먼저 완성해주세요' : '단어 추가'}
+          </Text>
         </TouchableOpacity>
+
+        {/* 다음 버튼 — 스크롤 안에 자연스럽게 배치 */}
+        <View style={styles.nextSection}>
+          <Text style={styles.countText}>{validCount}개 단어 입력됨</Text>
+          <Button label="다음" onPress={handleNext} disabled={validCount < 1} />
+        </View>
       </ScrollView>
 
       {/* 품사 선택 모달 */}
@@ -180,27 +195,18 @@ export default function WordSetManualEntryScreen({ navigation }: Props) {
           </View>
         </TouchableOpacity>
       </Modal>
-
-      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-        <Text style={styles.countText}>{validCount}개 단어 입력됨</Text>
-        <Button
-          label="다음"
-          onPress={handleNext}
-          disabled={validCount < 1}
-        />
-      </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: {
+  container: {
     flex: 1,
     backgroundColor: colors.background.primary,
   },
   body: {
     paddingHorizontal: 20,
-    paddingBottom: 16,
+    paddingTop: 20,
     gap: 12,
   },
   title: {
@@ -242,9 +248,9 @@ const styles = StyleSheet.create({
   posSelector: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
+    alignSelf: 'center',
     gap: 4,
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
     backgroundColor: colors.accent + '15',
@@ -254,6 +260,33 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.accent,
   },
+  addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 14,
+  },
+  addButtonDisabled: {
+    opacity: 0.5,
+  },
+  addButtonText: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: colors.accent,
+  },
+  addButtonTextDisabled: {
+    color: colors.text.disabled,
+  },
+  nextSection: {
+    gap: 8,
+    marginTop: 8,
+  },
+  countText: {
+    fontSize: 14,
+    color: colors.text.secondary,
+  },
+  // --- 모달 ---
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.6)',
@@ -288,28 +321,5 @@ const styles = StyleSheet.create({
   modalOptionTextActive: {
     color: colors.accent,
     fontWeight: '600',
-  },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 14,
-  },
-  addButtonText: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: colors.accent,
-  },
-  footer: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: colors.border.default,
-    gap: 6,
-  },
-  countText: {
-    fontSize: 14,
-    color: colors.text.secondary,
   },
 });

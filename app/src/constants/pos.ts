@@ -16,5 +16,5 @@ export const POS_LABELS: Record<string, string> = {
 
 // 수동 입력 화면에서 선택 가능한 품사 목록 (자주 쓰는 순서)
 export const POS_OPTIONS = [
-  'noun', 'verb', 'adj', 'adv', 'phrase', 'prep', 'conj', 'interj',
+  'noun', 'verb', 'adj', 'adv', 'phrase', 'idiom', 'prep', 'conj', 'pron', 'det', 'interj',
 ] as const;
