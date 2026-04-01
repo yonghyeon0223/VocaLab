@@ -81,7 +81,7 @@ vocalab/
 | `colors.background.tertiary` | `#2a2a2a` | 구분선, 비활성 |
 | `colors.text.primary` | `#f5f5f5` | 주요 텍스트 |
 | `colors.text.secondary` | `#888888` | 보조 텍스트 |
-| `colors.text.disabled` | `#444444` | placeholder |
+| `colors.text.disabled` | `#666666` | placeholder |
 | `colors.border.default` | `#2e2e2e` | 기본 테두리 |
 | `colors.border.focused` | `#6c63ff` | 포커스 테두리 |
 | `colors.accent` | `#6c63ff` | 버튼, 링크, 강조 |

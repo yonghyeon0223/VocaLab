@@ -2,21 +2,37 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../constants/colors';
+import { Word } from '../../../shared/types';
 import HomeScreen from '../screens/HomeScreen';
 import LearningScreen from '../screens/LearningScreen';
 import MemoryLabScreen from '../screens/MemoryLabScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import WordSetInputMethodScreen from '../screens/WordSetInputMethodScreen';
+import WordSetTextInputScreen from '../screens/WordSetTextInputScreen';
+import WordSetPhotoInputScreen from '../screens/WordSetPhotoInputScreen';
+import WordSelectionScreen from '../screens/WordSelectionScreen';
+import MeaningSelectionScreen from '../screens/MeaningSelectionScreen';
 import WordSetNameScreen from '../screens/WordSetNameScreen';
-import WordSetWordsScreen from '../screens/WordSetWordsScreen';
 import ProfileLevelTestScreen from '../screens/ProfileLevelTestScreen';
 import ProfileLevelResultScreen from '../screens/ProfileLevelResultScreen';
 
+type ClassifiedWords = {
+  easy: string[];
+  appropriate: string[];
+  hard: string[];
+};
+
+type MeaningEntry = { meaning: string; partOfSpeech: string };
+
 // 메인 스택 전체에서 사용하는 파라미터 목록.
-// 탭 안의 화면과 모달/플로우 화면을 모두 포함한다.
 export type MainStackParamList = {
   HomeTabs: undefined;
-  WordSetName: undefined;
-  WordSetWords: { name: string };
+  WordSetInputMethod: undefined;
+  WordSetTextInput: undefined;
+  WordSetPhotoInput: undefined;
+  WordSelection: { categories: ClassifiedWords; source: 'manual' | 'photo' };
+  MeaningSelection: { meanings: Record<string, MeaningEntry[]>; source: 'manual' | 'photo' };
+  WordSetName: { source: 'manual' | 'photo'; words: Word[] };
   RetestLevel: undefined;
   RetestResult: undefined;
 };
@@ -70,14 +86,16 @@ const screenOptions = {
   animation: 'slide_from_right',
 } as const;
 
-// 메인 앱의 최상위 네비게이터.
-// 하단 탭과 단어 세트 생성/난이도 재테스트 같은 플로우 화면을 포함한다.
 export default function MainTabNavigator() {
   return (
     <Stack.Navigator screenOptions={screenOptions}>
       <Stack.Screen name="HomeTabs" component={HomeTabs} />
+      <Stack.Screen name="WordSetInputMethod" component={WordSetInputMethodScreen} />
+      <Stack.Screen name="WordSetTextInput" component={WordSetTextInputScreen} />
+      <Stack.Screen name="WordSetPhotoInput" component={WordSetPhotoInputScreen} />
+      <Stack.Screen name="WordSelection" component={WordSelectionScreen} />
+      <Stack.Screen name="MeaningSelection" component={MeaningSelectionScreen} />
       <Stack.Screen name="WordSetName" component={WordSetNameScreen} />
-      <Stack.Screen name="WordSetWords" component={WordSetWordsScreen} />
       <Stack.Screen name="RetestLevel" component={ProfileLevelTestScreen} />
       <Stack.Screen name="RetestResult" component={ProfileLevelResultScreen} />
     </Stack.Navigator>

@@ -4,7 +4,11 @@ import { authenticate } from '../middlewares/authenticate';
 
 const router = Router();
 
-// 모든 단어 세트 엔드포인트는 인증이 필요하다.
+// AI 파이프라인 엔드포인트
+router.post('/extract-words', authenticate, wordSetController.extractWords);
+router.post('/extract-meanings', authenticate, wordSetController.extractMeanings);
+
+// CRUD 엔드포인트
 router.post('/', authenticate, wordSetController.createWordSet);
 router.get('/', authenticate, wordSetController.getWordSets);
 router.get('/:id', authenticate, wordSetController.getWordSetDetail);

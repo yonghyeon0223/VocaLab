@@ -4,7 +4,7 @@ import { connectDB } from './utils/db';
 import { ensureIndexes as ensureUserIndexes } from './repositories/userRepository';
 import { ensureIndexes as ensurePendingIndexes } from './repositories/pendingVerificationRepository';
 import { ensureIndexes as ensureWordSetIndexes } from './repositories/wordSetRepository';
-import { ensureIndexes as ensureWordIndexes } from './repositories/wordRepository';
+// words 컬렉션은 Sprint 05에서 삭제 — wordSets 문서에 내장
 import authRouter from './routes/auth';
 import profileRouter from './routes/profile';
 import sentenceRouter from './routes/sentences';
@@ -15,7 +15,8 @@ import { errorMiddleware } from './middlewares/errorMiddleware';
 
 const app = express();
 
-app.use(express.json());
+// 사진 입력 시 base64 이미지가 포함되므로 body 크기 제한을 50MB로 올린다.
+app.use(express.json({ limit: '50mb' }));
 
 // 서버가 살아있는지 확인하는 기본 엔드포인트
 app.get('/health', (_req, res) => {
@@ -44,7 +45,6 @@ async function bootstrap() {
   await ensureUserIndexes();
   await ensurePendingIndexes();
   await ensureWordSetIndexes();
-  await ensureWordIndexes();
   // testSentences 컬렉션이 비어있으면 시드 데이터를 삽입한다.
   await seedIfEmpty(TEST_SENTENCES);
   app.listen(ENV.PORT, () => {

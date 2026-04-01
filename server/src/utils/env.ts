@@ -13,4 +13,5 @@ export const ENV = {
   JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN ?? '365d',
   EMAIL_USER: process.env.EMAIL_USER ?? '',
   EMAIL_PASS: process.env.EMAIL_PASS ?? '',
+  ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY ?? '',
 } as const;

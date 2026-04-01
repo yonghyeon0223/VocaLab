@@ -1,6 +1,33 @@
 import api from './api';
 import { useWordSetStore } from '../stores/wordSetStore';
-import { WordSet } from '../../../shared/types';
+import { WordSet, Word } from '../../../shared/types';
+
+// --- AI 파이프라인 ---
+
+type ClassifiedWords = {
+  easy: string[];
+  appropriate: string[];
+  hard: string[];
+};
+
+type MeaningEntry = {
+  meaning: string;
+  partOfSpeech: string;
+};
+
+// AI 단어 추출 + 카테고리 분류
+export async function extractWords(input: { type: 'text'; text: string } | { type: 'photo'; images: string[] }) {
+  const res = await api.post('/api/word-sets/extract-words', input);
+  return res.data.data as { categories: ClassifiedWords; totalCount: number };
+}
+
+// AI 뜻 추출
+export async function extractMeanings(words: string[]) {
+  const res = await api.post('/api/word-sets/extract-meanings', { words });
+  return res.data.data.meanings as Record<string, MeaningEntry[]>;
+}
+
+// --- CRUD ---
 
 // 서버에서 단어 세트 목록을 가져와 store에 반영한다.
 export async function fetchWordSets() {
@@ -11,8 +38,12 @@ export async function fetchWordSets() {
 }
 
 // 새 단어 세트를 생성하고 store에 추가한다.
-export async function createWordSet(name: string, words: string[]) {
-  const res = await api.post('/api/word-sets', { name, words });
+export async function createWordSet(
+  name: string,
+  source: 'manual' | 'photo',
+  words: Word[],
+) {
+  const res = await api.post('/api/word-sets', { name, source, words });
   const wordSet = res.data.data.wordSet as WordSet;
   useWordSetStore.getState().addWordSet(wordSet);
   return wordSet;

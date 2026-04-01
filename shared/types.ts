@@ -36,23 +36,22 @@ export type TestSentence = {
   translation: string; // 한국어 번역
 };
 
-// 단어 세트. 유저 1명이 여러 세트를 가질 수 있다.
+// 개별 영단어. wordSets 문서의 words 배열에 내장된다.
+export type Word = {
+  spelling: string;       // 영단어 원형 (소문자 정규화)
+  meaning: string;        // 한국어 뜻 그룹 (예: "옳은, 정확한")
+  partOfSpeech: string;   // 품사 (noun, verb, adj, adv 등)
+};
+
+// 단어 세트. words 배열을 문서 안에 내장(embed)한다.
 export type WordSet = {
   _id: string;
   userId: string;
   name: string;           // 세트 이름 (1~30자)
-  wordCount: number;      // 세트 내 단어 수 (비정규화)
+  source: 'manual' | 'photo'; // 생성 방식
+  words: Word[];          // 내장 단어 배열
   createdAt: Date;
   updatedAt: Date;
-};
-
-// 개별 영단어. wordSets 컬렉션에 속한다.
-export type Word = {
-  _id: string;
-  wordSetId: string;
-  userId: string;
-  spelling: string;       // 영단어 원형 (소문자 정규화)
-  createdAt: Date;
 };
 
 // 이메일 인증 대기 중인 임시 데이터. 인증 완료 또는 만료 시 삭제된다.

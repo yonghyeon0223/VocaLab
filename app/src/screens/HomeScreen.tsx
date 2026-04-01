@@ -65,7 +65,7 @@ export default function HomeScreen() {
         <View style={styles.setCardContent}>
           <Text style={styles.setName}>{item.name}</Text>
           <Text style={styles.setMeta}>
-            {item.wordCount}개 단어 · {formatDate(item.createdAt)}
+            {item.words?.length ?? 0}개 단어 · {formatDate(item.createdAt)}
           </Text>
         </View>
         <TouchableOpacity onPress={() => handleDelete(item._id)} hitSlop={8}>
@@ -142,7 +142,7 @@ export default function HomeScreen() {
         <TouchableOpacity
           style={styles.fabButton}
           activeOpacity={0.8}
-          onPress={() => navigation.navigate('WordSetName')}
+          onPress={() => navigation.navigate('WordSetInputMethod')}
         >
           <Ionicons name="add" size={22} color="#fff" />
           <Text style={styles.fabText}>새 단어 세트 만들기</Text>

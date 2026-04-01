@@ -1,69 +1,81 @@
 import { ObjectId } from 'mongodb';
 import * as wordSetRepository from '../repositories/wordSetRepository';
-import * as wordRepository from '../repositories/wordRepository';
+import * as aiService from './aiService';
+import * as userRepository from '../repositories/userRepository';
 import { AppError } from '../utils/AppError';
 
-// 단어 세트를 생성하고 단어를 일괄 삽입한다.
-// words는 이미 trim/소문자/중복제거가 완료된 상태로 들어온다.
-export async function createWordSet(userId: string, name: string, words: string[]) {
-  const userOid = new ObjectId(userId);
+type WordInput = {
+  spelling: string;
+  meaning: string;
+  partOfSpeech: string;
+};
 
-  // 1. 단어를 소문자 정규화하고 중복을 제거한다.
-  const normalized = [...new Set(words.map((w) => w.trim().toLowerCase()))].filter(Boolean);
-
-  if (normalized.length < 5) {
-    throw new AppError('INVALID_WORD_COUNT', 400, '최소 5개의 단어가 필요해요');
+// 단어 세트를 생성한다. words 배열을 문서에 내장한다.
+export async function createWordSet(
+  userId: string,
+  name: string,
+  source: 'manual' | 'photo',
+  words: WordInput[],
+) {
+  if (words.length < 1) {
+    throw new AppError('INVALID_WORD_COUNT', 400, '최소 1개의 단어가 필요합니다');
   }
-  if (normalized.length > 200) {
-    throw new AppError('INVALID_WORD_COUNT', 400, '최대 200개까지 입력할 수 있어요');
+  if (words.length > 1000) {
+    throw new AppError('INVALID_WORD_COUNT', 400, '최대 1,000개까지 가능합니다');
   }
 
-  // 2. 세트를 먼저 만든다.
-  const wordSet = await wordSetRepository.insertWordSet({
-    userId: userOid,
+  return wordSetRepository.insertWordSet({
+    userId: new ObjectId(userId),
     name,
-    wordCount: normalized.length,
+    source,
+    words,
   });
-
-  // 3. 단어를 일괄 삽입한다.
-  await wordRepository.insertMany({
-    wordSetId: wordSet._id,
-    userId: userOid,
-    spellings: normalized,
-  });
-
-  return wordSet;
 }
 
-// 유저의 모든 세트를 최신순으로 가져온다.
+// 유저의 모든 세트를 최신순으로 가져온다 (words 미포함).
 export async function getWordSets(userId: string) {
   return wordSetRepository.findByUserId(new ObjectId(userId));
 }
 
-// 세트 상세 조회: 세트 정보 + 소속 단어 목록.
+// 세트 상세 조회 (words 포함).
 export async function getWordSetDetail(userId: string, setId: string) {
-  const userOid = new ObjectId(userId);
-  const setOid = new ObjectId(setId);
-
-  const wordSet = await wordSetRepository.findByIdAndUserId(setOid, userOid);
+  const wordSet = await wordSetRepository.findByIdAndUserId(
+    new ObjectId(setId),
+    new ObjectId(userId),
+  );
   if (!wordSet) {
     throw new AppError('WORD_SET_NOT_FOUND', 404, '단어 세트를 찾을 수 없습니다');
   }
-
-  const words = await wordRepository.findByWordSetId(setOid);
-  return { wordSet, words };
+  return wordSet;
 }
 
-// 세트 삭제: 소속 단어를 먼저 삭제한 뒤 세트를 삭제한다.
+// 세트 삭제. embed 구조이므로 문서 하나만 삭제하면 된다.
 export async function deleteWordSet(userId: string, setId: string) {
-  const userOid = new ObjectId(userId);
-  const setOid = new ObjectId(setId);
-
-  const wordSet = await wordSetRepository.findByIdAndUserId(setOid, userOid);
+  const wordSet = await wordSetRepository.findByIdAndUserId(
+    new ObjectId(setId),
+    new ObjectId(userId),
+  );
   if (!wordSet) {
     throw new AppError('WORD_SET_NOT_FOUND', 404, '단어 세트를 찾을 수 없습니다');
   }
+  await wordSetRepository.deleteById(new ObjectId(setId));
+}
 
-  await wordRepository.deleteByWordSetId(setOid);
-  await wordSetRepository.deleteById(setOid);
+// AI 단어 추출 + 카테고리 분류. 유저 레벨 정보를 서버에서 조회해 프롬프트에 주입한다.
+export async function extractWords(
+  userId: string,
+  input: { type: 'text'; text: string } | { type: 'photo'; images: string[] },
+) {
+  const user = await userRepository.findById(new ObjectId(userId));
+  if (!user) throw new AppError('USER_NOT_FOUND', 404, '유저를 찾을 수 없습니다');
+
+  const levelRatings = (user.levelRatings ?? {}) as Record<string, string>;
+  const activeLevel = user.activeLevel ?? 5;
+
+  return aiService.extractAndClassifyWords(input, levelRatings, activeLevel);
+}
+
+// AI 뜻 추출. 선택된 단어 목록을 받아 한국어 뜻 + 품사를 반환한다.
+export async function extractMeanings(words: string[]) {
+  return aiService.extractMeanings(words);
 }
