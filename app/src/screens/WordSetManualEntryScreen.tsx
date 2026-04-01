@@ -27,14 +27,7 @@ type DraftWord = {
   partOfSpeech: string;
 };
 
-const POS_OPTIONS = ['noun', 'verb', 'adj', 'adv', 'phrase'] as const;
-const POS_LABELS: Record<string, string> = {
-  noun: '명사',
-  verb: '동사',
-  adj: '형용사',
-  adv: '부사',
-  phrase: '표현',
-};
+import { POS_OPTIONS, POS_LABELS } from '../constants/pos';
 
 export default function WordSetManualEntryScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();

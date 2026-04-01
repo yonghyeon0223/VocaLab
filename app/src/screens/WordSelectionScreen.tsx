@@ -14,14 +14,9 @@ type Props = {
   route: RouteProp<MainStackParamList, 'WordSelection'>;
 };
 
+import { POS_LABELS } from '../constants/pos';
+
 const MAX_WORDS = 1000;
-const POS_LABELS: Record<string, string> = {
-  noun: '명사',
-  verb: '동사',
-  adj: '형용사',
-  adv: '부사',
-  phrase: '표현',
-};
 
 export default function WordSelectionScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
