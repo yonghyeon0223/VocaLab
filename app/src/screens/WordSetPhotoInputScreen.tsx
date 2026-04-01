@@ -67,7 +67,7 @@ export default function WordSetPhotoInputScreen({ navigation }: Props) {
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.title}>영어 교재 촬영</Text>
-        <Text style={styles.subtitle}>교재, 단어장, 프린트 등을 촬영하거나 갤러리에서 선택하세요.</Text>
+        <Text style={styles.subtitle}>영어 교재, 단어장, 시험지, 프린트 등을 촬영하거나 갤러리에서 선택하세요.</Text>
 
         {/* 촬영/갤러리 버튼 */}
         <View style={styles.buttonRow}>
