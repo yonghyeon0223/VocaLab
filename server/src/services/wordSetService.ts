@@ -73,16 +73,31 @@ export async function extractWords(
   const activeLevel = (user.activeLevel as number) ?? 5;
 
   // 1단계: AI가 spelling만 추출
+  console.log('[extract] 1단계: AI 단어 추출 시작');
   const spellings = await aiService.extractSpellings(input, activeLevel);
+  console.log(`[extract] 1단계 완료: ${spellings.length}개 단어 추출`);
+
   if (spellings.length === 0) {
     return { words: [] };
   }
 
   // 2단계: Free Dictionary API로 영영 뜻 조회
+  console.log('[extract] 2단계: Dictionary 조회 시작');
   const dictionaryResults = await dictionaryService.lookupWords(spellings);
+  const withMeanings = dictionaryResults.filter((r) => r.meanings.length > 0);
+  const totalDefs = withMeanings.reduce((sum, r) => sum + r.meanings.length, 0);
+  console.log(`[extract] 2단계 완료: ${withMeanings.length}/${spellings.length}개 사전 발견, 총 ${totalDefs}개 뜻`);
+
+  // 뜻이 너무 많으면 단어당 최대 5개로 제한 (토큰 초과 방지)
+  const trimmed = withMeanings.map((r) => ({
+    spelling: r.spelling,
+    meanings: r.meanings.slice(0, 5),
+  }));
 
   // 3단계: AI가 영영 뜻을 한국어로 번역
-  const translated = await aiService.translateMeanings(dictionaryResults);
+  console.log('[extract] 3단계: AI 번역 시작');
+  const translated = await aiService.translateMeanings(trimmed);
+  console.log(`[extract] 3단계 완료: ${translated.length}개 단어 번역`);
 
   return { words: translated };
 }

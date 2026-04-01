@@ -4,9 +4,9 @@ import { WordSet, Word } from '../../../shared/types';
 
 // --- AI + Dictionary ---
 
-// 단어 추출 (AI → Free Dictionary → AI 번역). 시간이 걸리므로 timeout 120초.
+// 단어 추출 (AI → Free Dictionary → AI 번역). 3단계 파이프라인이므로 timeout 180초.
 export async function extractWords(input: { type: 'text'; text: string } | { type: 'photo'; images: string[] }) {
-  const res = await api.post('/api/word-sets/extract', input, { timeout: 120000 });
+  const res = await api.post('/api/word-sets/extract', input, { timeout: 180000 });
   return res.data.data as { words: Word[] };
 }
 
