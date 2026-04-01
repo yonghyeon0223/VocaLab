@@ -61,7 +61,7 @@ export async function deleteWordSet(userId: string, setId: string) {
   await wordSetRepository.deleteById(new ObjectId(setId));
 }
 
-// AI 단어 추출 + 카테고리 분류. 유저 레벨 정보를 서버에서 조회해 프롬프트에 주입한다.
+// AI 단어 추출. 유저 레벨 정보를 서버에서 조회해 프롬프트에 주입한다.
 export async function extractWords(
   userId: string,
   input: { type: 'text'; text: string } | { type: 'photo'; images: string[] },
@@ -73,10 +73,5 @@ export async function extractWords(
   const activeLevel = (user.activeLevel as number) ?? 5;
   const hardLevel = (user.hardLevel as number) ?? 10;
 
-  return aiService.extractAndClassifyWords(input, easyLevel, activeLevel, hardLevel);
-}
-
-// AI 뜻 추출. 선택된 단어 목록을 받아 한국어 뜻 + 품사를 반환한다.
-export async function extractMeanings(words: string[]) {
-  return aiService.extractMeanings(words);
+  return aiService.extractWords(input, easyLevel, activeLevel, hardLevel);
 }

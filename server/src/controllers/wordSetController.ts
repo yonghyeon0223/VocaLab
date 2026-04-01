@@ -1,9 +1,9 @@
 import { NextFunction, Request, Response } from 'express';
 import * as wordSetService from '../services/wordSetService';
-import { createWordSetSchema, extractWordsSchema, extractMeaningsSchema } from '../validators/wordSetValidator';
+import { createWordSetSchema, extractWordsSchema } from '../validators/wordSetValidator';
 import { AppError } from '../utils/AppError';
 
-// AI 단어 추출 + 카테고리 분류
+// AI 단어 추출 (단어 + 뜻 + 품사 한 번에)
 export async function extractWords(req: Request, res: Response, next: NextFunction) {
   try {
     if (!req.userId) return next(new AppError('UNAUTHORIZED', 401, '인증이 필요합니다'));
@@ -17,21 +17,7 @@ export async function extractWords(req: Request, res: Response, next: NextFuncti
   }
 }
 
-// AI 뜻 추출
-export async function extractMeanings(req: Request, res: Response, next: NextFunction) {
-  try {
-    if (!req.userId) return next(new AppError('UNAUTHORIZED', 401, '인증이 필요합니다'));
-
-    const data = extractMeaningsSchema.parse(req.body);
-    const meanings = await wordSetService.extractMeanings(data.words);
-
-    res.json({ success: true, data: { meanings } });
-  } catch (err) {
-    next(err);
-  }
-}
-
-// 세트 생성 (Sprint 05: words 배열 내장)
+// 세트 생성
 export async function createWordSet(req: Request, res: Response, next: NextFunction) {
   try {
     if (!req.userId) return next(new AppError('UNAUTHORIZED', 401, '인증이 필요합니다'));

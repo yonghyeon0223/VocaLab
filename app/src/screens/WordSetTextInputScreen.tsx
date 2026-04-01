@@ -37,11 +37,11 @@ export default function WordSetTextInputScreen({ navigation }: Props) {
     setError('');
     try {
       const result = await extractWords({ type: 'text', text: trimmed });
-      if (result.totalCount < 1) {
+      if (result.words.length < 1) {
         setError('추출할 수 있는 단어가 없어요. 다른 텍스트를 입력해보세요.');
         return;
       }
-      navigation.navigate('WordSelection', { categories: result.categories, source: 'manual' });
+      navigation.navigate('WordSelection', { words: result.words, source: 'manual' });
     } catch {
       setError('단어 추출에 실패했어요. 다시 시도해주세요.');
     } finally {

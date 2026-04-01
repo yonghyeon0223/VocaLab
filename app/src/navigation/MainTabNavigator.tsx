@@ -11,18 +11,14 @@ import WordSetInputMethodScreen from '../screens/WordSetInputMethodScreen';
 import WordSetTextInputScreen from '../screens/WordSetTextInputScreen';
 import WordSetPhotoInputScreen from '../screens/WordSetPhotoInputScreen';
 import WordSelectionScreen from '../screens/WordSelectionScreen';
-import MeaningSelectionScreen from '../screens/MeaningSelectionScreen';
 import WordSetNameScreen from '../screens/WordSetNameScreen';
 import ProfileLevelTestScreen from '../screens/ProfileLevelTestScreen';
 import ProfileLevelResultScreen from '../screens/ProfileLevelResultScreen';
 
-type ClassifiedWords = {
-  easy: string[];
-  appropriate: string[];
-  hard: string[];
+type ExtractedWord = {
+  spelling: string;
+  meanings: Array<{ meaning: string; partOfSpeech: string }>;
 };
-
-type MeaningEntry = { meaning: string; partOfSpeech: string };
 
 // 메인 스택 전체에서 사용하는 파라미터 목록.
 export type MainStackParamList = {
@@ -30,8 +26,7 @@ export type MainStackParamList = {
   WordSetInputMethod: undefined;
   WordSetTextInput: undefined;
   WordSetPhotoInput: undefined;
-  WordSelection: { categories: ClassifiedWords; source: 'manual' | 'photo' };
-  MeaningSelection: { meanings: Record<string, MeaningEntry[]>; source: 'manual' | 'photo' };
+  WordSelection: { words: ExtractedWord[]; source: 'manual' | 'photo' };
   WordSetName: { source: 'manual' | 'photo'; words: Word[] };
   RetestLevel: undefined;
   RetestResult: undefined;
@@ -94,7 +89,6 @@ export default function MainTabNavigator() {
       <Stack.Screen name="WordSetTextInput" component={WordSetTextInputScreen} />
       <Stack.Screen name="WordSetPhotoInput" component={WordSetPhotoInputScreen} />
       <Stack.Screen name="WordSelection" component={WordSelectionScreen} />
-      <Stack.Screen name="MeaningSelection" component={MeaningSelectionScreen} />
       <Stack.Screen name="WordSetName" component={WordSetNameScreen} />
       <Stack.Screen name="RetestLevel" component={ProfileLevelTestScreen} />
       <Stack.Screen name="RetestResult" component={ProfileLevelResultScreen} />

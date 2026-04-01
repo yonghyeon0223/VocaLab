@@ -4,11 +4,10 @@ import { authenticate } from '../middlewares/authenticate';
 
 const router = Router();
 
-// AI 파이프라인 엔드포인트
-router.post('/extract-words', authenticate, wordSetController.extractWords);
-router.post('/extract-meanings', authenticate, wordSetController.extractMeanings);
+// AI 단어 추출 (단일 호출로 단어 + 뜻 + 품사)
+router.post('/extract', authenticate, wordSetController.extractWords);
 
-// CRUD 엔드포인트
+// CRUD
 router.post('/', authenticate, wordSetController.createWordSet);
 router.get('/', authenticate, wordSetController.getWordSets);
 router.get('/:id', authenticate, wordSetController.getWordSetDetail);

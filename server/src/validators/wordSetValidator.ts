@@ -12,12 +12,7 @@ export const extractWordsSchema = z.discriminatedUnion('type', [
   }),
 ]);
 
-// 뜻 추출 요청 스키마
-export const extractMeaningsSchema = z.object({
-  words: z.array(z.string()).min(1, '최소 1개의 단어가 필요합니다').max(1000),
-});
-
-// 단어 세트 생성 요청 스키마 (Sprint 05 변경: words 배열에 meaning/partOfSpeech 내장)
+// 단어 세트 생성 요청 스키마 (words 배열에 meaning/partOfSpeech 내장)
 const wordSchema = z.object({
   spelling: z.string(),
   meaning: z.string(),
@@ -38,5 +33,4 @@ export const createWordSetSchema = z.object({
 });
 
 export type ExtractWordsInput = z.infer<typeof extractWordsSchema>;
-export type ExtractMeaningsInput = z.infer<typeof extractMeaningsSchema>;
 export type CreateWordSetInput = z.infer<typeof createWordSetSchema>;

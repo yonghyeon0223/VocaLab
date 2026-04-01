@@ -86,11 +86,11 @@ export default function WordSetPhotoInputScreen({ navigation }: Props) {
       }
 
       const result = await extractWords({ type: 'photo', images });
-      if (result.totalCount < 1) {
+      if (result.words.length < 1) {
         setError('추출할 수 있는 단어가 없어요. 다른 사진을 촬영해보세요.');
         return;
       }
-      navigation.navigate('WordSelection', { categories: result.categories, source: 'photo' });
+      navigation.navigate('WordSelection', { words: result.words, source: 'photo' });
     } catch {
       setError('단어 추출에 실패했어요. 다시 시도해주세요.');
     } finally {
