@@ -12,22 +12,20 @@ export const POS_LABELS: Record<string, string> = {
   interj: '감탄사',
   phrase: '숙어',
   idiom: '관용구',
+  other: '그 외',
 };
 
-// 수동 입력 화면에서 선택 가능한 품사 (자주 쓰는 9개)
+// 수동 입력 화면에서 선택 가능한 품사
 export const POS_OPTIONS = [
-  'noun', 'verb', 'adj', 'adv', 'phrase', 'prep', 'conj', 'pron', 'interj',
+  'noun', 'verb', 'adj', 'adv', 'phrase', 'other',
 ] as const;
 
 // 한 줄 칩용 줄임말
 export const POS_SHORT: Record<string, string> = {
-  noun: '명',
-  verb: '동',
-  adj: '형',
-  adv: '부',
-  phrase: '숙',
-  prep: '전',
-  conj: '접',
-  pron: '대',
-  interj: '감',
+  noun: '명사',
+  verb: '동사',
+  adj: '형용사',
+  adv: '부사',
+  phrase: '숙어',
+  other: '그 외',
 };
