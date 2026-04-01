@@ -77,6 +77,10 @@ export default function WordSetPhotoInputScreen({ navigation }: Props) {
   return (
     <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
       <Text style={styles.title}>사진을 촬영하세요</Text>
+      <Text style={styles.subtitle}>
+        교재, 시험지, 단어장 등 영어가 포함된 페이지를{'\n'}
+        촬영하거나 갤러리에서 선택하세요. 최대 {MAX_PHOTOS}장까지 추가할 수 있어요.
+      </Text>
 
       {photos.length > 0 ? (
         <>
@@ -147,6 +151,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.text.primary,
     lineHeight: 40,
+    paddingHorizontal: 24,
+  },
+  subtitle: {
+    fontSize: 15,
+    color: colors.text.secondary,
+    lineHeight: 22,
     paddingHorizontal: 24,
   },
   photoSlide: {

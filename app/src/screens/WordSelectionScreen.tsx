@@ -15,6 +15,13 @@ type Props = {
 };
 
 const MAX_WORDS = 1000;
+const POS_LABELS: Record<string, string> = {
+  noun: '명사',
+  verb: '동사',
+  adj: '형용사',
+  adv: '부사',
+  phrase: '표현',
+};
 
 export default function WordSelectionScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
@@ -97,7 +104,7 @@ export default function WordSelectionScreen({ navigation, route }: Props) {
                   <Text style={[styles.meaningText, !isSelected && styles.meaningTextOff]}>
                     {m.meaning}
                   </Text>
-                  <Text style={styles.posTag}>{m.partOfSpeech}</Text>
+                  <Text style={styles.posTag}>{POS_LABELS[m.partOfSpeech] ?? m.partOfSpeech}</Text>
                 </View>
               ))}
             </TouchableOpacity>

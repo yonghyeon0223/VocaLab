@@ -28,6 +28,13 @@ type DraftWord = {
 };
 
 const POS_OPTIONS = ['noun', 'verb', 'adj', 'adv', 'phrase'] as const;
+const POS_LABELS: Record<string, string> = {
+  noun: '명사',
+  verb: '동사',
+  adj: '형용사',
+  adv: '부사',
+  phrase: '표현',
+};
 
 export default function WordSetManualEntryScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
@@ -130,7 +137,7 @@ export default function WordSetManualEntryScreen({ navigation }: Props) {
                   activeOpacity={0.7}
                 >
                   <Text style={[styles.posText, w.partOfSpeech === pos && styles.posTextActive]}>
-                    {pos}
+                    {POS_LABELS[pos]}
                   </Text>
                 </TouchableOpacity>
               ))}
