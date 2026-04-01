@@ -39,7 +39,7 @@ export default function WordSetTextInputScreen({ navigation }: Props) {
         <View style={styles.titleBlock}>
           <Text style={styles.title}>영어 지문을 입력하세요</Text>
           <Text style={styles.subtitle}>
-            교과서 지문, 기사, 가사, 에세이 등{'\n'}어떤 영어 텍스트든 붙여넣거나 입력하세요.
+            교과서 지문, 단어 리스트, 팝송 가사 등{'\n'}영어 텍스트를 붙여넣거나 입력하세요.
           </Text>
         </View>
 
@@ -47,7 +47,7 @@ export default function WordSetTextInputScreen({ navigation }: Props) {
           style={styles.textArea}
           value={text}
           onChangeText={setText}
-          placeholder={'영어 텍스트를 자유롭게 입력하세요...'}
+          placeholder={'apple, banana, cherry...\n\nThe invention of the smartphone has changed the way people communicate...'}
           placeholderTextColor={colors.text.disabled}
           multiline
           textAlignVertical="top"
