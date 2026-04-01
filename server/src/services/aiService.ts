@@ -50,9 +50,10 @@ function buildPrompt(activeLevel: number, wordCount: number, purposes: string[])
   return `You are a vocabulary extraction assistant for a Korean English learner.
 
 [Task]
-Extract up to ${wordCount} high-priority English words/phrases from the user's input.
+Extract exactly ${wordCount} high-priority English words/phrases from the user's input. Not more, not less.
 Prioritize words that are most essential to understanding the passage or context.
-If the input is simply a word list or lacks clear context, select the ${wordCount} most valuable words you would recommend for a student aiming to achieve their learning goals.
+If the input is simply a word list or lacks clear context, select the top ${wordCount} most valuable words you would recommend for a student aiming to achieve their learning goals.
+If fewer than ${wordCount} extractable words exist, return however many you can — but never exceed ${wordCount}.
 
 [Student Profile]
 - English level: ${LEVEL_LABELS[activeLevel]} (based on Korean school curriculum)
