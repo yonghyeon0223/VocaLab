@@ -75,7 +75,9 @@ ${purposeStr}
   e.g. "doubt" → [{verb: "의심하다"}, {noun: "의심"}]
   e.g. "sense" → [{noun: "감각"}, {noun: "의미"}, {verb: "감지하다"}]
 - partOfSpeech must be one of: noun, verb, adj, adv, phrase
-- Korean meanings should be natural and easy for a student to understand
+- Korean meanings should closely mirror the nuance of the English definition, not over-simplified.
+  e.g. "elaborate" → "정교한" is too vague. Better: "세부적으로 정성 들인" for "involving a lot of careful detail"
+- Still keep it natural Korean that a student can understand
 
 Return JSON only (no explanation):
 {
