@@ -41,13 +41,21 @@ async function lookupWord(word: string): Promise<DictionaryMeaning[]> {
   }
 }
 
-// 여러 단어를 병렬로 조회한다. 사전에 없는 단어는 빈 배열로 반환한다.
+// 여러 단어를 조회한다. rate limit 방지를 위해 동시 5개씩 배치로 처리한다.
 export async function lookupWords(words: string[]): Promise<DictionaryResult[]> {
-  const results = await Promise.all(
-    words.map(async (spelling) => {
-      const meanings = await lookupWord(spelling);
-      return { spelling, meanings };
-    }),
-  );
+  const BATCH_SIZE = 5;
+  const results: DictionaryResult[] = [];
+
+  for (let i = 0; i < words.length; i += BATCH_SIZE) {
+    const batch = words.slice(i, i + BATCH_SIZE);
+    const batchResults = await Promise.all(
+      batch.map(async (spelling) => {
+        const meanings = await lookupWord(spelling);
+        return { spelling, meanings };
+      }),
+    );
+    results.push(...batchResults);
+  }
+
   return results;
 }
