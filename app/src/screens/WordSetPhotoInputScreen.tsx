@@ -1,13 +1,11 @@
 import { useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Dimensions,
   FlatList,
   Image,
   StyleSheet,
   Text,
-  TextInput as RNTextInput,
   TouchableOpacity,
   View,
   ViewToken,
@@ -16,9 +14,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { readAsStringAsync } from 'expo-file-system/legacy';
 import { colors } from '../constants/colors';
-import { extractWords } from '../services/wordSetService';
 import { MainStackParamList } from '../navigation/MainTabNavigator';
 import Button from '../components/ui/Button';
 
@@ -33,10 +29,6 @@ export default function WordSetPhotoInputScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const [photos, setPhotos] = useState<string[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [wordCountText, setWordCountText] = useState('20');
-  const wordCount = Math.min(100, Math.max(1, parseInt(wordCountText, 10) || 1));
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
   const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
     if (viewableItems.length > 0 && viewableItems[0].index != null) {
@@ -82,36 +74,10 @@ export default function WordSetPhotoInputScreen({ navigation }: Props) {
     }
   }
 
-  async function handleExtract() {
-    if (photos.length < 1) return;
-    setLoading(true);
-    setError('');
-    try {
-      // URI를 base64로 변환한다.
-      const images: string[] = [];
-      for (const uri of photos) {
-        const base64 = await readAsStringAsync(uri, { encoding: 'base64' });
-        images.push(base64);
-      }
-
-      const result = await extractWords({ type: 'photo', images, wordCount });
-      if (result.words.length < 1) {
-        setError('추출할 수 있는 단어가 없어요. 다른 사진을 촬영해보세요.');
-        return;
-      }
-      navigation.navigate('WordSelection', { words: result.words, source: 'photo' });
-    } catch {
-      setError('단어 추출에 실패했어요. 다시 시도해주세요.');
-    } finally {
-      setLoading(false);
-    }
-  }
-
   return (
     <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
       <Text style={styles.title}>사진을 촬영하세요</Text>
 
-      {/* 사진 카드 슬라이더 */}
       {photos.length > 0 ? (
         <>
           <FlatList
@@ -127,16 +93,12 @@ export default function WordSetPhotoInputScreen({ navigation }: Props) {
             renderItem={({ item, index }) => (
               <View style={styles.photoSlide}>
                 <Image source={{ uri: item }} style={styles.photoImage} />
-                <TouchableOpacity
-                  style={styles.deleteButton}
-                  onPress={() => handleDelete(index)}
-                >
+                <TouchableOpacity style={styles.deleteButton} onPress={() => handleDelete(index)}>
                   <Ionicons name="close-circle" size={28} color={colors.error} />
                 </TouchableOpacity>
               </View>
             )}
           />
-          {/* 도트 인디케이터 */}
           <View style={styles.dots}>
             {photos.map((_, i) => (
               <View key={i} style={[styles.dot, i === currentIndex && styles.dotActive]} />
@@ -152,7 +114,6 @@ export default function WordSetPhotoInputScreen({ navigation }: Props) {
 
       <Text style={styles.counter}>{photos.length} / {MAX_PHOTOS}장</Text>
 
-      {/* 촬영/갤러리 버튼 */}
       <View style={styles.buttonRow}>
         <TouchableOpacity style={styles.actionBtn} onPress={() => pickImage(true)} activeOpacity={0.7}>
           <Ionicons name="camera-outline" size={22} color={colors.accent} />
@@ -164,34 +125,12 @@ export default function WordSetPhotoInputScreen({ navigation }: Props) {
         </TouchableOpacity>
       </View>
 
-      {/* 추출할 단어 수 */}
-      <View style={styles.wordCountRow}>
-        <Text style={styles.wordCountLabel}>추출할 핵심 단어 수</Text>
-        <View style={styles.wordCountControl}>
-          <RNTextInput
-            style={styles.wordCountInput}
-            value={wordCountText}
-            onChangeText={setWordCountText}
-            keyboardType="number-pad"
-            maxLength={3}
-            textAlign="center"
-            selectTextOnFocus
-          />
-          <Text style={styles.wordCountUnit}>개 (최대 100)</Text>
-        </View>
-      </View>
-
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-        {loading ? (
-          <View style={styles.loadingRow}>
-            <ActivityIndicator color={colors.accent} />
-            <Text style={styles.loadingText}>단어를 분석하고 있어요</Text>
-          </View>
-        ) : (
-          <Button label="단어 추출하기" onPress={handleExtract} disabled={photos.length < 1} />
-        )}
+        <Button
+          label="다음"
+          onPress={() => navigation.navigate('WordSetWordCount', { type: 'photo', photos })}
+          disabled={photos.length < 1}
+        />
       </View>
     </View>
   );
@@ -278,57 +217,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.accent,
   },
-  wordCountRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-  },
-  wordCountLabel: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: colors.text.primary,
-  },
-  wordCountControl: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  wordCountInput: {
-    width: 56,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: colors.background.secondary,
-    borderWidth: 1,
-    borderColor: colors.border.default,
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.accent,
-  },
-  wordCountUnit: {
-    fontSize: 14,
-    color: colors.text.secondary,
-  },
-  error: {
-    fontSize: 14,
-    color: colors.error,
-    textAlign: 'center',
-    paddingHorizontal: 24,
-  },
   footer: {
     paddingHorizontal: 24,
     paddingTop: 8,
     marginTop: 'auto',
-  },
-  loadingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    paddingVertical: 14,
-  },
-  loadingText: {
-    fontSize: 15,
-    color: colors.text.secondary,
   },
 });

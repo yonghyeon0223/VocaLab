@@ -10,17 +10,20 @@ import ProfileScreen from '../screens/ProfileScreen';
 import WordSetInputMethodScreen from '../screens/WordSetInputMethodScreen';
 import WordSetTextInputScreen from '../screens/WordSetTextInputScreen';
 import WordSetPhotoInputScreen from '../screens/WordSetPhotoInputScreen';
+import WordSetWordCountScreen from '../screens/WordSetWordCountScreen';
+import WordSetManualEntryScreen from '../screens/WordSetManualEntryScreen';
 import WordSelectionScreen from '../screens/WordSelectionScreen';
 import WordSetNameScreen from '../screens/WordSetNameScreen';
 import ProfileLevelTestScreen from '../screens/ProfileLevelTestScreen';
 import ProfileLevelResultScreen from '../screens/ProfileLevelResultScreen';
 
-// 메인 스택 전체에서 사용하는 파라미터 목록.
 export type MainStackParamList = {
   HomeTabs: undefined;
   WordSetInputMethod: undefined;
   WordSetTextInput: undefined;
   WordSetPhotoInput: undefined;
+  WordSetWordCount: { type: 'text'; text: string } | { type: 'photo'; photos: string[] };
+  WordSetManualEntry: undefined;
   WordSelection: { words: Word[]; source: 'manual' | 'photo' };
   WordSetName: { source: 'manual' | 'photo'; words: Word[] };
   RetestLevel: undefined;
@@ -83,6 +86,8 @@ export default function MainTabNavigator() {
       <Stack.Screen name="WordSetInputMethod" component={WordSetInputMethodScreen} />
       <Stack.Screen name="WordSetTextInput" component={WordSetTextInputScreen} />
       <Stack.Screen name="WordSetPhotoInput" component={WordSetPhotoInputScreen} />
+      <Stack.Screen name="WordSetWordCount" component={WordSetWordCountScreen} />
+      <Stack.Screen name="WordSetManualEntry" component={WordSetManualEntryScreen} />
       <Stack.Screen name="WordSelection" component={WordSelectionScreen} />
       <Stack.Screen name="WordSetName" component={WordSetNameScreen} />
       <Stack.Screen name="RetestLevel" component={ProfileLevelTestScreen} />
