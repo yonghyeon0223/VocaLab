@@ -69,8 +69,10 @@ function buildSystemPrompt(activeLevel: number) {
 
 [3단계] 뜻 추출
 - 뜻이 여러 개면 반드시 별도 객체로 분리. 하나의 meaning에 여러 뜻을 쉼표로 넣지 마.
-  예: sense → [{"meaning": "감각", ...}, {"meaning": "의미", ...}]
-  예: run → [{"meaning": "달리다", ...}, {"meaning": "운영하다", ...}]
+- 품사가 다르면 반드시 별도 객체로.
+  예: doubt → [{"meaning": "의심하다", "partOfSpeech": "verb"}, {"meaning": "의심", "partOfSpeech": "noun"}]
+- 같은 품사라도 뜻이 다르면 별도 객체로.
+  예: sense → [{"meaning": "감각", "partOfSpeech": "noun"}, {"meaning": "의미", "partOfSpeech": "noun"}]
 - 텍스트에서 사용된 뜻 + 학습자가 알아야 할 다른 주요 뜻 모두 포함
 - 학생이 가장 쉽게 이해할 수 있는 자연스러운 한국어로
 - 품사: noun, verb, adj, adv, phrase
