@@ -14,7 +14,20 @@ export const POS_LABELS: Record<string, string> = {
   idiom: '관용구',
 };
 
-// 수동 입력 화면에서 선택 가능한 품사 목록 (자주 쓰는 순서)
+// 수동 입력 화면에서 선택 가능한 품사 (자주 쓰는 9개)
 export const POS_OPTIONS = [
-  'noun', 'verb', 'adj', 'adv', 'phrase', 'idiom', 'prep', 'conj', 'pron', 'det', 'interj',
+  'noun', 'verb', 'adj', 'adv', 'phrase', 'prep', 'conj', 'pron', 'interj',
 ] as const;
+
+// 한 줄 칩용 줄임말
+export const POS_SHORT: Record<string, string> = {
+  noun: '명',
+  verb: '동',
+  adj: '형',
+  adv: '부',
+  phrase: '숙',
+  prep: '전',
+  conj: '접',
+  pron: '대',
+  interj: '감',
+};

@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import {
-  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,7 +11,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../constants/colors';
-import { POS_OPTIONS, POS_LABELS } from '../constants/pos';
+import { POS_OPTIONS, POS_SHORT } from '../constants/pos';
 import { MainStackParamList } from '../navigation/MainTabNavigator';
 import { Word } from '../../../shared/types';
 import Button from '../components/ui/Button';
@@ -30,7 +29,6 @@ type DraftWord = {
 export default function WordSetManualEntryScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const [words, setWords] = useState<DraftWord[]>([{ spelling: '', meaning: '', partOfSpeech: 'noun' }]);
-  const [posPickerIndex, setPosPickerIndex] = useState<number | null>(null);
 
   function updateWord(index: number, field: keyof DraftWord, value: string) {
     setWords((prev) => {
@@ -123,15 +121,21 @@ export default function WordSetManualEntryScreen({ navigation }: Props) {
               placeholderTextColor={colors.text.disabled}
             />
 
-            {/* 품사 드롭다운 — 가운데 배치 */}
-            <TouchableOpacity
-              style={styles.posSelector}
-              onPress={() => setPosPickerIndex(i)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.posSelectorText}>{POS_LABELS[w.partOfSpeech] ?? w.partOfSpeech}</Text>
-              <Ionicons name="chevron-down" size={16} color={colors.accent} />
-            </TouchableOpacity>
+            {/* 품사 한 줄 칩 */}
+            <View style={styles.posRow}>
+              {POS_OPTIONS.map((pos) => (
+                <TouchableOpacity
+                  key={pos}
+                  style={[styles.posChip, w.partOfSpeech === pos && styles.posChipActive]}
+                  onPress={() => updateWord(i, 'partOfSpeech', pos)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.posChipText, w.partOfSpeech === pos && styles.posChipTextActive]}>
+                    {POS_SHORT[pos]}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
         ))}
 
@@ -155,46 +159,6 @@ export default function WordSetManualEntryScreen({ navigation }: Props) {
         </View>
       </ScrollView>
 
-      {/* 품사 선택 모달 */}
-      <Modal
-        visible={posPickerIndex !== null}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setPosPickerIndex(null)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setPosPickerIndex(null)}
-        >
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>품사 선택</Text>
-            {POS_OPTIONS.map((pos) => (
-              <TouchableOpacity
-                key={pos}
-                style={[
-                  styles.modalOption,
-                  posPickerIndex !== null && words[posPickerIndex]?.partOfSpeech === pos && styles.modalOptionActive,
-                ]}
-                onPress={() => {
-                  if (posPickerIndex !== null) {
-                    updateWord(posPickerIndex, 'partOfSpeech', pos);
-                    setPosPickerIndex(null);
-                  }
-                }}
-                activeOpacity={0.7}
-              >
-                <Text style={[
-                  styles.modalOptionText,
-                  posPickerIndex !== null && words[posPickerIndex]?.partOfSpeech === pos && styles.modalOptionTextActive,
-                ]}>
-                  {POS_LABELS[pos]}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </TouchableOpacity>
-      </Modal>
     </View>
   );
 }
@@ -245,20 +209,27 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.text.primary,
   },
-  posSelector: {
+  posRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'center',
-    gap: 4,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: colors.accent + '15',
+    justifyContent: 'space-between',
   },
-  posSelectorText: {
+  posChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: colors.background.primary,
+  },
+  posChipActive: {
+    backgroundColor: colors.accent + '22',
+  },
+  posChipText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '500',
+    color: colors.text.disabled,
+  },
+  posChipTextActive: {
     color: colors.accent,
+    fontWeight: '700',
   },
   addButton: {
     flexDirection: 'row',
@@ -285,41 +256,5 @@ const styles = StyleSheet.create({
   countText: {
     fontSize: 14,
     color: colors.text.secondary,
-  },
-  // --- 모달 ---
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    backgroundColor: colors.background.secondary,
-    borderRadius: 16,
-    padding: 20,
-    width: 260,
-    gap: 4,
-  },
-  modalTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text.primary,
-    marginBottom: 8,
-  },
-  modalOption: {
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 10,
-  },
-  modalOptionActive: {
-    backgroundColor: colors.accent + '22',
-  },
-  modalOptionText: {
-    fontSize: 15,
-    color: colors.text.secondary,
-  },
-  modalOptionTextActive: {
-    color: colors.accent,
-    fontWeight: '600',
   },
 });
