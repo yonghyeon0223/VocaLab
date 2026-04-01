@@ -69,10 +69,7 @@ export default function WordSetWordCountScreen({ navigation, route }: Props) {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={[styles.body, { paddingTop: insets.top + 60 }]}>
-        <Text style={styles.title}>몇 개의 핵심 단어를{'\n'}찾아볼까요?</Text>
-        <Text style={styles.subtitle}>
-          AI가 입력한 내용에서 가장 중요한 단어를{'\n'}골라줘요. 나중에 선택을 바꿀 수 있어요.
-        </Text>
+        <Text style={styles.title}>몇 개의 핵심 단어를{'\n'}골라볼까요?</Text>
 
         <View style={styles.inputRow}>
           <RNTextInput
@@ -87,7 +84,7 @@ export default function WordSetWordCountScreen({ navigation, route }: Props) {
           <Text style={styles.wordCountUnit}>개</Text>
         </View>
 
-        <Text style={styles.hint}>1~100개 입력 가능 · 20~30개를 추천해요</Text>
+        <Text style={styles.hint}>하나의 단어 세트에 1~100개까지 담을 수 있어요.{'\n'}15~30개로 구성하면 학습 효과가 좋아요.</Text>
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
       </View>
