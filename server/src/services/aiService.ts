@@ -95,21 +95,18 @@ export function calculateClassificationRange(
 function buildCategoryLabels(minApp: number, maxApp: number) {
   const labels: string[] = [];
 
-  // 쉬움 카테고리 (minApp > 1인 경우만)
   if (minApp > 1) {
     const easyMax = minApp - 1;
-    labels.push(`1. ${LEVEL_LABELS[easyMax]} 이하 (lv.1~${easyMax})`);
+    labels.push(`- easy (쉬움): ${LEVEL_LABELS[easyMax]} 이하 (lv.1~${easyMax})`);
   }
 
-  // 적절 카테고리 (항상 존재)
   labels.push(
-    `${labels.length + 1}. ${LEVEL_LABELS[minApp]} ~ ${LEVEL_LABELS[maxApp]} (lv.${minApp}~${maxApp})`,
+    `- appropriate (적절): ${LEVEL_LABELS[minApp]} ~ ${LEVEL_LABELS[maxApp]} (lv.${minApp}~${maxApp})`,
   );
 
-  // 심화 카테고리 (maxApp < 10인 경우만)
   if (maxApp < 10) {
     const hardMin = maxApp + 1;
-    labels.push(`${labels.length + 1}. ${LEVEL_LABELS[hardMin]} 이상 (lv.${hardMin}~10)`);
+    labels.push(`- hard (심화): ${LEVEL_LABELS[hardMin]} 이상 (lv.${hardMin}~10)`);
   }
 
   return labels.join('\n');
