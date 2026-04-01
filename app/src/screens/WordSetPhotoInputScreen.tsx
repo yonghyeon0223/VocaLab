@@ -15,7 +15,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
+import { readAsStringAsync } from 'expo-file-system';
 import { colors } from '../constants/colors';
 import { extractWords } from '../services/wordSetService';
 import { MainStackParamList } from '../navigation/MainTabNavigator';
@@ -78,10 +78,10 @@ export default function WordSetPhotoInputScreen({ navigation }: Props) {
     setLoading(true);
     setError('');
     try {
-      // URI를 base64로 변환
+      // URI를 base64로 변환한다.
       const images: string[] = [];
       for (const uri of photos) {
-        const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
+        const base64 = await readAsStringAsync(uri, { encoding: 'base64' });
         images.push(base64);
       }
 

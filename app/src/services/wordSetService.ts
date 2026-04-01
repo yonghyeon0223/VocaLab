@@ -15,9 +15,9 @@ type MeaningEntry = {
   partOfSpeech: string;
 };
 
-// AI 단어 추출 + 카테고리 분류
+// AI 단어 추출 + 카테고리 분류. 사진 입력 시 base64 전송에 시간이 걸리므로 timeout을 60초로 설정.
 export async function extractWords(input: { type: 'text'; text: string } | { type: 'photo'; images: string[] }) {
-  const res = await api.post('/api/word-sets/extract-words', input);
+  const res = await api.post('/api/word-sets/extract-words', input, { timeout: 60000 });
   return res.data.data as { categories: ClassifiedWords; totalCount: number };
 }
 
