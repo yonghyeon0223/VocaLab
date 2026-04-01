@@ -35,7 +35,7 @@ export default function WordSetInputMethodScreen({ navigation }: Props) {
           <View style={styles.cardContent}>
             <Text style={styles.cardTitle}>영어 지문 입력</Text>
             <Text style={styles.cardDesc}>
-              교과서 지문, 팝송 가사 등을 붙여넣으면{'\n'}
+              교과서 지문, 단어 리스트, 가사 등을 붙여넣으면{'\n'}
               AI가 내 수준에 맞는 핵심 단어를 찾아줘요
             </Text>
           </View>
@@ -50,7 +50,7 @@ export default function WordSetInputMethodScreen({ navigation }: Props) {
           <View style={styles.cardContent}>
             <Text style={styles.cardTitle}>사진 촬영</Text>
             <Text style={styles.cardDesc}>
-              교재, 시험지, 단어장을 촬영하면{'\n'}
+              영어 교재, 단어장, 프린트를 촬영하면{'\n'}
               AI가 사진 속 핵심 단어를 찾아줘요
             </Text>
           </View>
