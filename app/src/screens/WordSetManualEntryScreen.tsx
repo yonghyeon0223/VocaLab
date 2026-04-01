@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import {
   KeyboardAvoidingView,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -32,6 +33,7 @@ import { POS_OPTIONS, POS_LABELS } from '../constants/pos';
 export default function WordSetManualEntryScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const [words, setWords] = useState<DraftWord[]>([{ spelling: '', meaning: '', partOfSpeech: 'noun' }]);
+  const [posPickerIndex, setPosPickerIndex] = useState<number | null>(null);
 
   function updateWord(index: number, field: keyof DraftWord, value: string) {
     setWords((prev) => {
@@ -121,20 +123,14 @@ export default function WordSetManualEntryScreen({ navigation }: Props) {
               placeholderTextColor={colors.text.disabled}
             />
 
-            <View style={styles.posRow}>
-              {POS_OPTIONS.map((pos) => (
-                <TouchableOpacity
-                  key={pos}
-                  style={[styles.posChip, w.partOfSpeech === pos && styles.posChipActive]}
-                  onPress={() => updateWord(i, 'partOfSpeech', pos)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.posText, w.partOfSpeech === pos && styles.posTextActive]}>
-                    {POS_LABELS[pos]}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+            <TouchableOpacity
+              style={styles.posSelector}
+              onPress={() => setPosPickerIndex(i)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.posSelectorText}>{POS_LABELS[w.partOfSpeech] ?? w.partOfSpeech}</Text>
+              <Ionicons name="chevron-down" size={16} color={colors.text.secondary} />
+            </TouchableOpacity>
           </View>
         ))}
 
@@ -143,6 +139,47 @@ export default function WordSetManualEntryScreen({ navigation }: Props) {
           <Text style={styles.addButtonText}>단어 추가</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* 품사 선택 모달 */}
+      <Modal
+        visible={posPickerIndex !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setPosPickerIndex(null)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setPosPickerIndex(null)}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>품사 선택</Text>
+            {POS_OPTIONS.map((pos) => (
+              <TouchableOpacity
+                key={pos}
+                style={[
+                  styles.modalOption,
+                  posPickerIndex !== null && words[posPickerIndex]?.partOfSpeech === pos && styles.modalOptionActive,
+                ]}
+                onPress={() => {
+                  if (posPickerIndex !== null) {
+                    updateWord(posPickerIndex, 'partOfSpeech', pos);
+                    setPosPickerIndex(null);
+                  }
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={[
+                  styles.modalOptionText,
+                  posPickerIndex !== null && words[posPickerIndex]?.partOfSpeech === pos && styles.modalOptionTextActive,
+                ]}>
+                  {POS_LABELS[pos]}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
         <Text style={styles.countText}>{validCount}개 단어 입력됨</Text>
@@ -202,25 +239,53 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.text.primary,
   },
-  posRow: {
+  posSelector: {
     flexDirection: 'row',
-    gap: 6,
-  },
-  posChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 8,
-    backgroundColor: colors.background.primary,
+    backgroundColor: colors.accent + '15',
   },
-  posChipActive: {
+  posSelectorText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.accent,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: colors.background.secondary,
+    borderRadius: 16,
+    padding: 20,
+    width: 260,
+    gap: 4,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text.primary,
+    marginBottom: 8,
+  },
+  modalOption: {
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+  },
+  modalOptionActive: {
     backgroundColor: colors.accent + '22',
   },
-  posText: {
-    fontSize: 14,
-    color: colors.text.disabled,
-    fontWeight: '500',
+  modalOptionText: {
+    fontSize: 15,
+    color: colors.text.secondary,
   },
-  posTextActive: {
+  modalOptionTextActive: {
     color: colors.accent,
     fontWeight: '600',
   },
