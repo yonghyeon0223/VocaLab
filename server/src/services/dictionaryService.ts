@@ -41,12 +41,15 @@ async function lookupWord(word: string): Promise<DictionaryMeaning[]> {
   }
 }
 
-// 여러 단어를 조회한다. rate limit 방지를 위해 동시 5개씩 배치로 처리한다.
+// 여러 단어를 조회한다. rate limit 방지를 위해 동시 3개씩 + 배치 간 500ms 딜레이.
 export async function lookupWords(words: string[]): Promise<DictionaryResult[]> {
-  const BATCH_SIZE = 5;
+  const BATCH_SIZE = 3;
+  const DELAY_MS = 500;
   const results: DictionaryResult[] = [];
 
   for (let i = 0; i < words.length; i += BATCH_SIZE) {
+    if (i > 0) await new Promise((r) => setTimeout(r, DELAY_MS));
+
     const batch = words.slice(i, i + BATCH_SIZE);
     const batchResults = await Promise.all(
       batch.map(async (spelling) => {
