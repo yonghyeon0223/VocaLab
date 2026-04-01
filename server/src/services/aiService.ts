@@ -72,41 +72,24 @@ const MOCK_MEANINGS: MeaningsMap = {
 
 // --- 분류 범위 계산 ---
 
-// 유저의 levelRatings에서 appropriate 범위를 구해 카테고리 경계를 결정한다.
-export function calculateClassificationRange(
-  levelRatings: Record<string, string>,
-  activeLevel: number,
-) {
-  const appropriateLevels = Object.entries(levelRatings)
-    .filter(([, rating]) => rating === 'appropriate')
-    .map(([level]) => Number(level));
-
-  const minAppropriate = appropriateLevels.length > 0
-    ? Math.min(...appropriateLevels)
-    : activeLevel;
-  const maxAppropriate = appropriateLevels.length > 0
-    ? Math.max(...appropriateLevels)
-    : activeLevel;
-
-  return { minAppropriate, maxAppropriate };
-}
-
-// 레벨 범위를 교육 수준 레이블 문자열로 변환한다.
-function buildCategoryLabels(minApp: number, maxApp: number) {
+// 유저의 easyLevel/activeLevel/hardLevel로 카테고리 레이블을 생성한다.
+// 같은 값이면 해당 카테고리를 프롬프트에서 제외한다.
+function buildCategoryLabels(easyLv: number, activeLv: number, hardLv: number) {
   const labels: string[] = [];
 
-  if (minApp > 1) {
-    const easyMax = minApp - 1;
-    labels.push(`- easy (쉬움): ${LEVEL_LABELS[easyMax]} 이하 (lv.1~${easyMax})`);
+  // 쉬움: easyLevel과 activeLevel이 다를 때만 존재
+  if (easyLv !== activeLv) {
+    labels.push(`- easy (쉬움): ${LEVEL_LABELS[easyLv]} 이하 (lv.1~${easyLv})`);
   }
 
+  // 적절: 항상 존재
   labels.push(
-    `- appropriate (적절): ${LEVEL_LABELS[minApp]} ~ ${LEVEL_LABELS[maxApp]} (lv.${minApp}~${maxApp})`,
+    `- appropriate (적절): ${LEVEL_LABELS[activeLv]} (lv.${activeLv})`,
   );
 
-  if (maxApp < 10) {
-    const hardMin = maxApp + 1;
-    labels.push(`- hard (심화): ${LEVEL_LABELS[hardMin]} 이상 (lv.${hardMin}~10)`);
+  // 심화: activeLevel과 hardLevel이 다를 때만 존재
+  if (activeLv !== hardLv) {
+    labels.push(`- hard (심화): ${LEVEL_LABELS[hardLv]} 이상 (lv.${hardLv}~10)`);
   }
 
   return labels.join('\n');
@@ -150,20 +133,19 @@ async function callClaude(model: string, systemPrompt: string, userContent: unkn
 // 텍스트 또는 사진에서 영단어를 추출하고 3개 카테고리로 분류한다.
 export async function extractAndClassifyWords(
   input: { type: 'text'; text: string } | { type: 'photo'; images: string[] },
-  levelRatings: Record<string, string>,
+  easyLevel: number,
   activeLevel: number,
+  hardLevel: number,
 ): Promise<{ categories: ClassifiedWords; totalCount: number }> {
   if (USE_MOCK) {
     return { categories: MOCK_CLASSIFIED, totalCount: 30 };
   }
 
-  const { minAppropriate, maxAppropriate } = calculateClassificationRange(levelRatings, activeLevel);
-
   const levelTable = Object.entries(LEVEL_LABELS)
     .map(([lv, label]) => `  lv.${lv}  ${label}`)
     .join('\n');
 
-  const categoryLabels = buildCategoryLabels(minAppropriate, maxAppropriate);
+  const categoryLabels = buildCategoryLabels(easyLevel, activeLevel, hardLevel);
 
   const systemPrompt = `너는 한국인 영어 학습자를 위한 단어 추출기야.
 유저가 입력한 내용에서 "외울 가치가 있는 영단어와 숙어"만 골라내는 것이 목표야.

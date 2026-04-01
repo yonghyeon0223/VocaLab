@@ -69,10 +69,11 @@ export async function extractWords(
   const user = await userRepository.findById(new ObjectId(userId));
   if (!user) throw new AppError('USER_NOT_FOUND', 404, '유저를 찾을 수 없습니다');
 
-  const levelRatings = (user.levelRatings ?? {}) as Record<string, string>;
-  const activeLevel = user.activeLevel ?? 5;
+  const easyLevel = (user.easyLevel as number) ?? 1;
+  const activeLevel = (user.activeLevel as number) ?? 5;
+  const hardLevel = (user.hardLevel as number) ?? 10;
 
-  return aiService.extractAndClassifyWords(input, levelRatings, activeLevel);
+  return aiService.extractAndClassifyWords(input, easyLevel, activeLevel, hardLevel);
 }
 
 // AI 뜻 추출. 선택된 단어 목록을 받아 한국어 뜻 + 품사를 반환한다.
