@@ -16,11 +16,14 @@ type Props = {
 
 import { POS_LABELS } from '../constants/pos';
 
-const MAX_WORDS = 1000;
+const MAX_WORDS = 100;
 
 export default function WordSelectionScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
-  const { words, source } = route.params;
+  const { source } = route.params;
+
+  // AI가 100개 초과를 반환하면 100개까지만 사용한다.
+  const words = route.params.words.slice(0, MAX_WORDS);
 
   // 단어 선택 상태 (spelling 기준)
   const [selectedWords, setSelectedWords] = useState<Set<string>>(
@@ -75,7 +78,7 @@ export default function WordSelectionScreen({ navigation, route }: Props) {
           </TouchableOpacity>
         </View>
 
-        {words.map((w) => {
+        {words.map((w, idx) => {
           const isSelected = selectedWords.has(w.spelling);
           return (
             <TouchableOpacity
@@ -90,6 +93,7 @@ export default function WordSelectionScreen({ navigation, route }: Props) {
                   size={22}
                   color={isSelected ? colors.accent : colors.text.disabled}
                 />
+                <Text style={styles.wordIndex}>{idx + 1}</Text>
                 <Text style={[styles.wordSpelling, isSelected && styles.wordSpellingActive]}>
                   {w.spelling}
                 </Text>
@@ -167,6 +171,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  wordIndex: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.text.disabled,
+    minWidth: 24,
   },
   wordSpelling: {
     fontSize: 16,

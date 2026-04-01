@@ -29,7 +29,9 @@ export default function WordSetWordCountScreen({ navigation, route }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const wordCount = Math.min(100, Math.max(1, parseInt(wordCountText, 10) || 1));
+  const parsed = parseInt(wordCountText, 10);
+  const wordCount = isNaN(parsed) ? 0 : parsed;
+  const isValidCount = wordCount >= 1 && wordCount <= 100;
   const source = params.type === 'text' ? 'manual' : 'photo';
 
   async function handleExtract() {
@@ -84,7 +86,9 @@ export default function WordSetWordCountScreen({ navigation, route }: Props) {
           <Text style={styles.wordCountUnit}>개</Text>
         </View>
 
-        <Text style={styles.hint}>하나의 단어 세트에 1~100개까지 담을 수 있어요.{'\n'}15~30개로 구성하면 학습 효과가 좋아요.</Text>
+        {!isValidCount && wordCountText.length > 0 && (
+          <Text style={styles.rangeHint}>1~100 사이의 숫자를 입력해주세요</Text>
+        )}
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
       </View>
@@ -96,7 +100,7 @@ export default function WordSetWordCountScreen({ navigation, route }: Props) {
             <Text style={styles.loadingText}>핵심 단어를 찾고 있어요</Text>
           </View>
         ) : (
-          <Button label="핵심 단어 찾기" onPress={handleExtract} />
+          <Button label="핵심 단어 찾기" onPress={handleExtract} disabled={!isValidCount} />
         )}
       </View>
     </KeyboardAvoidingView>
@@ -147,9 +151,9 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: colors.text.secondary,
   },
-  hint: {
+  rangeHint: {
     fontSize: 14,
-    color: colors.text.disabled,
+    color: colors.error,
     textAlign: 'center',
   },
   error: {
