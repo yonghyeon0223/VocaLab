@@ -1,70 +1,97 @@
 # Sprint 05 — 진행 리포트
 
-**날짜**: 2026-04-02
+**날짜**: 2026-04-03
 **스프린트**: Sprint 05
 **상태**: ⚠️ 진행 중
 
 ---
 
-## 무엇을 했는가
+## 한줄 요약
 
-AI 기반 단어 추출 파이프라인을 구축하고, 3차례의 대규모 아키텍처 변경을 거쳐 현재 구조에 도달했다. 초기 설계에서 발견된 문제들을 실사용 테스트를 통해 반복적으로 개선했다.
-
----
-
-## 아키텍처 변경 이력
-
-### v1 — 초기 구현 (Sprint 05)
-```
-AI 호출 #1: 단어 추출 + 카테고리(easy/appropriate/hard) 분류
-AI 호출 #2: 선택된 단어의 한국어 뜻 추출
-```
-**문제**: 카테고리 경계 계산 복잡, edge case 많음, AI 뜻 생성 부정확
-
-### v2 — 카테고리 제거 + 프롬프트 통합 (Sprint 05-1)
-```
-AI 호출 1회: 단어 추출 + 뜻 + 품사 한 번에
-```
-**문제**: AI가 단어 추출과 뜻 생성을 동시에 하니 둘 다 중간 품질. 다의어 분리 부정확, 품사별 뜻 누락
-
-### v3 — Free Dictionary API 도입 (현재)
-```
-AI 호출 #1: 단어 추출 (spelling만)
-Dictionary API: 영영 뜻 + 품사 조회 (Free Dictionary)
-AI 호출 #2: 영영 뜻 → 한국어 번역
-```
-**장점**: AI는 각 역할에 집중, 뜻은 사전 기반으로 정확, 다의어/품사 분리 완벽
+AI로 영어 텍스트/사진에서 핵심 단어를 추출하고, 뜻과 품사를 붙여 단어 세트를 만드는 기능을 구현했다. 4번의 아키텍처 변경을 거쳐 현재 구조에 도달했다.
 
 ---
 
-## DB 구조 변경
+## 아키텍처 변경 과정 (시행착오 포함)
+
+### v1 — 카테고리 분류 (최초 구현)
+```
+AI #1: 단어 추출 + easy/appropriate/hard 3개 카테고리 분류
+AI #2: 선택된 단어의 한국어 뜻 추출
+```
+**무엇이 문제였나**: 카테고리 경계를 계산하는 로직이 복잡해서 edge case가 계속 나왔다. 유저의 레벨이 전부 lv.1이면 심화 카테고리가 사라지는 등 예측 불가능한 동작이 발생했다.
+
+### v2 — 카테고리 제거 + 프롬프트 통합
+```
+AI 1회: 단어 추출 + 뜻 + 품사를 한 번에
+```
+**무엇이 문제였나**: AI에게 "단어를 골라내면서 동시에 뜻도 만들어줘"라고 시키니 둘 다 중간 품질이 나왔다. 특히 다의어 분리가 안 됐다 — "감각"과 "의미"를 하나로 합치거나, 품사가 다른 뜻(doubt: 의심하다/의심)을 빼먹었다.
+
+### v3 — Free Dictionary API 도입
+```
+AI #1: 단어 추출 (spelling만)
+Free Dictionary API: 영영 뜻 조회
+AI #2: 영영 뜻 → 한국어 번역
+```
+**무엇이 문제였나**: Free Dictionary API의 rate limit에 걸려서 130개 단어 중 24개만 사전에서 찾았다. 딜레이를 넣어도 근본적으로 해결이 안 됐고, 3단계 파이프라인이라 속도도 느렸다.
+
+### v4 — 현재 구조 (AI 단일 호출 + 유저 단어 수 지정)
+```
+유저가 원하는 단어 수(N) 입력 → AI 1회 호출로 N개 단어 + 뜻 + 품사 추출
+```
+**왜 이게 맞나**: 유저가 단어 수를 직접 정하니 AI가 "몇 개를 뽑을지" 고민할 필요가 없다. Free Dictionary를 거치지 않으니 속도가 빠르다. 다의어 품질은 프롬프트 튜닝으로 계속 개선 중이다.
+
+---
+
+## 프롬프트 튜닝 과정에서 배운 것
+
+1. **AI에게 여러 역할을 동시에 시키면 다 못한다** — 추출 + 분류 + 뜻 생성을 한 번에 시키면 각각의 품질이 떨어진다
+2. **카테고리 규칙이 복잡하면 AI가 핵심에 집중 못한다** — easy/appropriate/hard 경계를 정교하게 지시할수록 정작 단어 추출 품질이 떨어졌다
+3. **"쉼표로 결합" 규칙이 모호하면 다의어가 합쳐진다** — "감각, 의미"처럼 AI가 하나로 합쳐버리는 문제. 결국 "쉼표 결합 금지"로 해결
+4. **프롬프트는 영어로 쓰는 게 낫다** — 한국어 프롬프트보다 영어 프롬프트의 응답 품질이 더 높았다
+5. **정확한 단어 수 지정이 중요하다** — "up to N개"라고 해도 AI는 초과할 수 있다. "exactly N, never exceed"도 완벽하지 않아서 클라이언트에서 100개 이상은 잘라내는 방어 로직을 추가했다
+6. **유저의 학습 목적(purposes)을 프롬프트에 넣으면 단어 선택 품질이 올라간다** — "TOEIC 준비 중인 학생"에게는 비즈니스 단어를 더 많이 뽑아준다
+
+---
+
+## 현재 화면 플로우
+
+### AI 기반 (영어 지문 / 사진 촬영)
+```
+입력 방식 선택 → 텍스트 입력 or 사진 촬영 → 단어 수 입력 → AI 추출 → 단어+뜻 선택 → 세트 이름 → 저장
+```
+
+### 수동 입력
+```
+입력 방식 선택 → 단어/뜻/품사 직접 입력 → 세트 이름 → 저장
+```
+
+---
+
+## DB 구조 (최종)
 
 ### words 컬렉션 → 삭제
-기존 별도 컬렉션 제거, wordSets 문서에 내장.
+wordSets 문서에 words 배열로 내장(embed).
 
-### Word 타입 변경 이력
-```
-v1: { spelling, meaning, partOfSpeech }         ← 다의어는 별도 객체
-v3: { spelling, meanings: WordMeaning[] }        ← 하나의 단어에 모든 뜻 포함
-```
-
-### WordMeaning (신규)
+### 타입
 ```typescript
 type WordMeaning = {
-  definition: string;     // 영영 풀이 (Free Dictionary 원본)
-  meaning: string;        // 한국어 뜻 (AI 번역)
+  definition: string;     // 영영 풀이
+  meaning: string;        // 한국어 뜻
   partOfSpeech: string;   // 품사
 };
-```
 
-### WordSet 타입
-```typescript
+type Word = {
+  spelling: string;
+  meanings: WordMeaning[];
+};
+
 type WordSet = {
   _id: string;
   userId: string;
   name: string;
   source: 'manual' | 'photo';
-  words: Word[];           // 내장 배열
+  words: Word[];          // 최대 100개
   createdAt: Date;
   updatedAt: Date;
 };
@@ -72,95 +99,85 @@ type WordSet = {
 
 ---
 
-## AI 프롬프트 변경 이력
+## 3가지 입력 방식
 
-### 단어 추출 프롬프트 (최종)
-- 7가지 입력 유형 자동 판단 (단어 나열, 단어장, 시험지, 지문, 가사, 혼합, 판독불가)
+| 방식 | 설명 | AI 사용 |
+|------|------|---------|
+| 영어 지문 입력 | 교과서 지문, 단어 리스트, 가사 등 텍스트 (최대 5,000자) | O |
+| 사진 촬영 | 교재, 단어장, 시험지 촬영 (최대 5장, 다중 선택 가능) | O |
+| 단어 직접 입력 | 단어/뜻/품사를 하나씩 수동 입력 (최대 100개) | X |
+
+---
+
+## 현재 프롬프트 (영어)
+
+- 유저 레벨(activeLevel) + 학습 목적(purposes) 주입
+- 7가지 입력 유형 자동 판단
 - 숙어/표현 통째로 추출
-- 학습자 수준(activeLevel) 기반 필터링 — 같거나 어려운 단어만
-- spelling만 반환 (뜻 생성은 사전 + AI 번역으로 분리)
-
-### 한국어 번역 프롬프트
-- Free Dictionary 영영 풀이를 자연스러운 한국어로 번역
-- 영영 원문(definition) 보존 + 한국어 번역(meaning) 추가
-
-### 프롬프트 튜닝 과정에서 발견한 교훈
-- AI에게 단어 추출 + 뜻 생성을 동시에 시키면 둘 다 품질 저하
-- 카테고리 분류 규칙이 복잡하면 AI가 핵심(단어 추출)에 집중 못함
-- 뜻 결합(쉼표) 규칙이 모호하면 다의어가 하나로 합쳐짐
-- "감각"과 "의미"처럼 대체 불가한 뜻도 AI가 같은 맥락으로 판단하는 경우 존재
-- → 결론: 뜻은 사전 API를 쓰는 게 정확도가 보장됨
+- 정확히 N개 단어 추출 (초과 시 클라이언트에서 100개로 자름)
+- 각 단어에 2~3개 한국어 뜻 + 영영 풀이 + 품사
+- 한국어 뜻은 영영 풀이의 뉘앙스를 최대한 반영
 
 ---
 
-## 화면 플로우 변경
+## 디자인/UX 결정
 
-### 초기 (6단계)
-```
-입력방식 → 입력 → AI#1(추출+분류) → 카테고리별 단어 선택 → AI#2(뜻) → 뜻 선택 → 이름 → 저장
-```
-
-### 최종 (5단계)
-```
-입력방식 → 입력 → AI+Dictionary(추출+뜻) → 단어+뜻 선택 → 이름 → 저장
-```
-
----
-
-## API 엔드포인트 변경
-
-| 엔드포인트 | 변경 |
-|-----------|------|
-| `POST /api/word-sets/extract` | 신규 — AI 추출 + Dictionary + AI 번역 통합 |
-| `POST /api/word-sets/extract-words` | 삭제 (extract로 통합) |
-| `POST /api/word-sets/extract-meanings` | 삭제 (Dictionary로 대체) |
-| `POST /api/word-sets` | 수정 — words 구조 변경 (meanings 배열 내장) |
+| 결정 | 이유 |
+|------|------|
+| 카테고리 분류 제거 | edge case 많고 AI 품질 저하 |
+| 단어 수 유저 입력 | AI에게 맡기면 너무 많이/적게 뽑음 |
+| 사진 세로 스크롤 | 가로 슬라이더보다 직관적 |
+| 품사 줄임말 칩 (명사/동사/형용사/부사/숙어/그 외) | 드롭다운은 번거롭고, 풀네임 칩은 넘침 |
+| 단어 선택: 카드 탭 + accent 바 | 체크박스가 너무 작아서 터치 불편 |
+| Free Dictionary API 제거 | rate limit + 커버리지 부족 |
 
 ---
 
-## 변경된 파일
+## 변경된 파일 (전체)
 
 ### 신규
 | 파일 | 설명 |
 |------|------|
-| `server/src/services/dictionaryService.ts` | Free Dictionary API 래퍼 |
+| `app/src/screens/WordSetInputMethodScreen.tsx` | 3가지 입력 방식 선택 |
+| `app/src/screens/WordSetTextInputScreen.tsx` | 영어 지문 입력 |
+| `app/src/screens/WordSetPhotoInputScreen.tsx` | 사진 촬영/갤러리 |
+| `app/src/screens/WordSetWordCountScreen.tsx` | 추출할 단어 수 입력 |
+| `app/src/screens/WordSetManualEntryScreen.tsx` | 단어/뜻/품사 수동 입력 |
+| `app/src/screens/WordSelectionScreen.tsx` | 단어+뜻 선택 |
+| `app/src/constants/pos.ts` | 품사 한국어 레이블 + 줄임말 |
+| `server/src/services/aiService.ts` | Claude API 호출 (4차 재작성) |
 | `server/src/services/levelLabels.ts` | 서버용 레벨 레이블 |
-| `app/src/screens/WordSetInputMethodScreen.tsx` | 입력 방식 선택 |
-| `app/src/screens/WordSetTextInputScreen.tsx` | 텍스트 입력 |
-| `app/src/screens/WordSetPhotoInputScreen.tsx` | 사진 촬영/선택 |
-| `app/src/screens/WordSelectionScreen.tsx` | 단어 + 뜻 선택 |
-| `docs/sprints/sprint-05/sprint-05_1.md` | Sprint 05-1 계획 문서 |
 
 ### 삭제
 | 파일 | 이유 |
 |------|------|
-| `server/src/repositories/wordRepository.ts` | words 컬렉션 제거 (embed) |
+| `server/src/repositories/wordRepository.ts` | words 컬렉션 제거 |
+| `server/src/services/dictionaryService.ts` | Free Dictionary API 제거 |
 | `app/src/screens/WordSetWordsScreen.tsx` | 새 플로우로 대체 |
 | `app/src/screens/MeaningSelectionScreen.tsx` | WordSelectionScreen에 통합 |
 
 ### 수정
 | 파일 | 설명 |
 |------|------|
-| `shared/types.ts` | Word/WordMeaning/WordSet 타입 변경 |
-| `server/src/services/aiService.ts` | 3차례 전면 재작성 (추출+번역 분리) |
-| `server/src/services/wordSetService.ts` | 3단계 파이프라인 통합 |
-| `server/src/controllers/wordSetController.ts` | extractMeanings 삭제, extract 변경 |
-| `server/src/routes/wordSets.ts` | 라우트 정리 |
-| `server/src/validators/wordSetValidator.ts` | 스키마 변경 |
-| `server/src/repositories/wordSetRepository.ts` | embed 구조 반영 |
+| `shared/types.ts` | Word → { spelling, meanings: WordMeaning[] } |
+| `server/src/services/wordSetService.ts` | AI 단일 호출 파이프라인 |
+| `server/src/controllers/wordSetController.ts` | extract 엔드포인트 |
+| `server/src/routes/wordSets.ts` | extract 라우트 |
+| `server/src/validators/wordSetValidator.ts` | wordCount 필드, 100개 제한 |
+| `server/src/repositories/wordSetRepository.ts` | embed 구조 |
 | `server/src/index.ts` | words 인덱스 제거, body limit 50MB |
-| `server/src/utils/env.ts` | ANTHROPIC_API_KEY 추가 |
-| `app/src/services/wordSetService.ts` | API 구조 변경 반영 |
-| `app/src/navigation/MainTabNavigator.tsx` | 화면 추가/삭제, 파라미터 변경 |
-| `app/src/screens/HomeScreen.tsx` | 세트 카드 words.length, navigate 변경 |
+| `server/src/utils/env.ts` | ANTHROPIC_API_KEY |
+| `app/src/services/wordSetService.ts` | extractWords API |
+| `app/src/navigation/MainTabNavigator.tsx` | 새 화면 등록 |
+| `app/src/screens/HomeScreen.tsx` | 세트 카드, navigate 변경 |
 | `app/src/screens/WordSetNameScreen.tsx` | 파라미터 구조 변경 |
 
 ---
 
-## 다음 작업에서 고려할 것
+## 다음에 할 것
 
-- Free Dictionary API에 없는 단어(숙어, 전문용어 등) 처리 방안
-- AI 번역 품질 모니터링 및 프롬프트 튜닝 지속
-- 단어 세트 상세 화면 (단어 목록 + 뜻 표시)
+- 단어 선택 화면 UI 개선 (현재 커밋 대기 중)
+- 프롬프트 튜닝 지속 (실제 사용 피드백 기반)
 - CLAUDE.md Sprint 05 도메인 지식 업데이트
+- 홈 화면 단어 세트 카드 디자인 (단어 수 표시 등)
 - 학습 기능 구현 (Sprint 06~)
