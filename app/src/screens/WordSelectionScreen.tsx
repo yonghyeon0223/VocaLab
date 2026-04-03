@@ -3,7 +3,6 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../constants/colors';
 import { MainStackParamList } from '../navigation/MainTabNavigator';
 import { Word } from '../../../shared/types';
@@ -83,29 +82,34 @@ export default function WordSelectionScreen({ navigation, route }: Props) {
           return (
             <TouchableOpacity
               key={w.spelling}
-              style={styles.wordCard}
+              style={[styles.wordCard, isSelected ? styles.wordCardSelected : styles.wordCardDeselected]}
               onPress={() => toggleWord(w.spelling)}
               activeOpacity={0.7}
             >
-              <View style={styles.wordHeader}>
-                <Ionicons
-                  name={isSelected ? 'checkbox' : 'square-outline'}
-                  size={22}
-                  color={isSelected ? colors.accent : colors.text.disabled}
-                />
-                <Text style={styles.wordIndex}>{idx + 1}</Text>
-                <Text style={[styles.wordSpelling, isSelected && styles.wordSpellingActive]}>
-                  {w.spelling}
-                </Text>
-              </View>
-              {w.meanings.map((m, i) => (
-                <View key={i} style={styles.meaningRow}>
-                  <Text style={[styles.meaningText, !isSelected && styles.meaningTextOff]}>
-                    {m.meaning}
+              {/* 왼쪽 accent 바 */}
+              {isSelected && <View style={styles.accentBar} />}
+
+              <View style={styles.wordContent}>
+                {/* 번호 + 영단어 */}
+                <View style={styles.wordHeader}>
+                  <Text style={[styles.wordIndex, isSelected && styles.wordIndexActive]}>{idx + 1}</Text>
+                  <Text style={[styles.wordSpelling, !isSelected && styles.wordSpellingOff]}>
+                    {w.spelling}
                   </Text>
-                  <Text style={styles.posTag}>{POS_LABELS[m.partOfSpeech] ?? m.partOfSpeech}</Text>
                 </View>
-              ))}
+
+                {/* 뜻 목록 */}
+                {w.meanings.map((m, i) => (
+                  <View key={i} style={styles.meaningRow}>
+                    <Text style={[styles.posBadge, !isSelected && styles.posBadgeOff]}>
+                      {POS_LABELS[m.partOfSpeech] ?? m.partOfSpeech}
+                    </Text>
+                    <Text style={[styles.meaningText, !isSelected && styles.meaningTextOff]}>
+                      {m.meaning}
+                    </Text>
+                  </View>
+                ))}
+              </View>
             </TouchableOpacity>
           );
         })}
@@ -162,8 +166,23 @@ const styles = StyleSheet.create({
     color: colors.accent,
   },
   wordCard: {
-    backgroundColor: colors.background.secondary,
+    flexDirection: 'row',
     borderRadius: 12,
+    overflow: 'hidden',
+  },
+  wordCardSelected: {
+    backgroundColor: colors.background.secondary,
+  },
+  wordCardDeselected: {
+    backgroundColor: colors.background.secondary,
+    opacity: 0.45,
+  },
+  accentBar: {
+    width: 4,
+    backgroundColor: colors.accent,
+  },
+  wordContent: {
+    flex: 1,
     padding: 14,
     gap: 6,
   },
@@ -176,22 +195,33 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     color: colors.text.disabled,
-    minWidth: 24,
+    minWidth: 22,
+  },
+  wordIndexActive: {
+    color: colors.accent,
   },
   wordSpelling: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
-    color: colors.text.secondary,
-  },
-  wordSpellingActive: {
     color: colors.text.primary,
+  },
+  wordSpellingOff: {
+    color: colors.text.secondary,
   },
   meaningRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     paddingLeft: 30,
-    paddingVertical: 2,
+  },
+  posBadge: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.accent,
+    minWidth: 36,
+  },
+  posBadgeOff: {
+    color: colors.text.disabled,
   },
   meaningText: {
     fontSize: 15,
@@ -200,11 +230,6 @@ const styles = StyleSheet.create({
   },
   meaningTextOff: {
     color: colors.text.disabled,
-  },
-  posTag: {
-    fontSize: 14,
-    color: colors.text.disabled,
-    fontWeight: '500',
   },
   footer: {
     paddingHorizontal: 20,
