@@ -24,8 +24,8 @@ export type MainStackParamList = {
   WordSetPhotoInput: undefined;
   WordSetWordCount: { type: 'text'; text: string } | { type: 'photo'; photos: string[] };
   WordSetExtracting: ({ type: 'text'; text: string } | { type: 'photo'; photos: string[] }) & { wordCount: number };
-  WordSelection: { words: Word[]; source: 'manual' | 'photo' };
-  WordSetName: { source: 'manual' | 'photo'; words: Word[] };
+  WordSelection: { words: Word[]; source: 'manual' | 'photo'; suggestedTitle?: string };
+  WordSetName: { source: 'manual' | 'photo'; words: Word[]; suggestedTitle?: string };
   RetestLevel: undefined;
   RetestResult: undefined;
 };

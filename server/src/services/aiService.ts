@@ -50,7 +50,12 @@ function buildExtractionPrompt(activeLevel: number, wordCount: number) {
 - Only extract words at or above this level. Exclude words that are too easy for this student.
 
 [Task]
-Extract exactly ${wordCount} high-priority English words/phrases from the input.
+1. Extract exactly ${wordCount} high-priority English words/phrases from the input.
+2. Suggest a short, descriptive Korean title for this word set.
+   The title should reflect the specific topic or content of the passage when possible.
+   (e.g. "인간의 감각 체계" for a passage about human senses,
+    "수능 모의고사 3번 지문" for an exam passage,
+    "경제 성장과 불평등" for an economics article)
 
 [Extraction Rules]
 - Extract phrases when words are better memorized together (e.g. "break down", "look for")
@@ -60,14 +65,14 @@ Extract exactly ${wordCount} high-priority English words/phrases from the input.
 - If fewer than ${wordCount} extractable words exist, return however many you can — but never exceed ${wordCount}
 
 Return JSON only:
-{ "words": ["word1", "word2", ...] }`;
+{ "title": "추천 제목", "words": ["word1", "word2", ...] }`;
 }
 
 export async function extractSpellings(
   input: { type: 'text'; text: string } | { type: 'photo'; images: string[] },
   activeLevel: number,
   wordCount: number,
-): Promise<string[]> {
+): Promise<{ title: string; spellings: string[] }> {
   const systemPrompt = buildExtractionPrompt(activeLevel, wordCount);
 
   let userContent: unknown[];
@@ -83,17 +88,20 @@ export async function extractSpellings(
   }
 
   const result = await callClaude('claude-haiku-4-5-20251001', systemPrompt, userContent);
+  const title: string = result.title ?? '';
   const words: string[] = Array.isArray(result.words) ? result.words : [];
 
   // 중복 제거 + 소문자 정규화
   const seen = new Set<string>();
-  return words
+  const spellings = words
     .map((w: string) => w?.toLowerCase?.()?.trim())
     .filter((w: string) => {
       if (!w || seen.has(w)) return false;
       seen.add(w);
       return true;
     });
+
+  return { title, spellings };
 }
 
 // --- 호출 #2: 뜻 생성 (원본 텍스트 포함, 배치) ---
@@ -118,7 +126,7 @@ Priority order for selecting meanings:
 - Maximum 3 meanings per word
 - Each meaning must be a separate object (never combine with comma)
 - definition: English explanation
-- meaning: Korean translation (natural, easy for students, closely mirror the English definition)
+- meaning: Korean translation — refer to and summarize the English definition. Keep it concise and natural for students.
 - partOfSpeech: noun, verb, adj, adv, phrase, prep, conj, pron, det, interj, idiom, other
 
 Words: {WORDS}

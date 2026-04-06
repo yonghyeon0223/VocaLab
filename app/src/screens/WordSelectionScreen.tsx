@@ -54,7 +54,7 @@ export default function WordSelectionScreen({ navigation, route }: Props) {
   function handleNext() {
     const selected = words.filter((w) => selectedWords.has(w.spelling));
     if (selected.length < 1) return;
-    navigation.navigate('WordSetName', { source, words: selected });
+    navigation.navigate('WordSetName', { source, words: selected, suggestedTitle: route.params.suggestedTitle });
   }
 
   return (

@@ -19,7 +19,7 @@ const MAX_NAME_LENGTH = 30;
 export default function WordSetNameScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
   const { source, words } = route.params;
-  const [name, setName] = useState('');
+  const [name, setName] = useState(route.params.suggestedTitle ?? '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 

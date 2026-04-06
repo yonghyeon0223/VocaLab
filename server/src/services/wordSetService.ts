@@ -71,8 +71,8 @@ export async function extractSpellings(
 
   const activeLevel = (user.activeLevel as number) ?? 5;
 
-  const spellings = await aiService.extractSpellings(input, activeLevel, wordCount);
-  return { spellings };
+  const result = await aiService.extractSpellings(input, activeLevel, wordCount);
+  return { title: result.title, spellings: result.spellings };
 }
 
 // 호출 #2: 뜻 생성 (원본 텍스트 + spelling 목록)

@@ -9,7 +9,7 @@ export async function extractSpellings(
   input: { type: 'text'; text: string; wordCount: number } | { type: 'photo'; images: string[]; wordCount: number },
 ) {
   const res = await api.post('/api/word-sets/extract-spellings', input, { timeout: 120000 });
-  return res.data.data as { spellings: string[] };
+  return res.data.data as { title: string; spellings: string[] };
 }
 
 // 호출 #2: 뜻 생성 (원본 텍스트 + spelling 목록)
