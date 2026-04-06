@@ -14,21 +14,21 @@ type Props = {
   route: RouteProp<MainStackParamList, 'WordSetExtracting'>;
 };
 
-// 상태 메시지 — 경과 시간에 따라 바뀐다
-const STATUS_MESSAGES = [
-  '입력 내용을 분석하고 있어요',
-  '핵심 단어를 골라내고 있어요',
-  '뜻과 품사를 정리하고 있어요',
-  '거의 다 됐어요, 조금만 기다려주세요',
-];
-
-function estimateTime(type: 'text' | 'photo', wordCount: number, photoCount: number): string {
+// 예상 소요 시간(초)을 계산한다.
+function estimateSeconds(type: 'text' | 'photo', wordCount: number, photoCount: number): number {
   if (type === 'photo') {
-    const base = photoCount * 8 + wordCount * 0.3;
-    return `약 ${Math.round(base)}~${Math.round(base * 1.5)}초`;
+    return Math.round(photoCount * 8 + wordCount * 0.3);
   }
-  const base = 5 + wordCount * 0.3;
-  return `약 ${Math.round(base)}~${Math.round(base * 1.5)}초`;
+  return Math.round(5 + wordCount * 0.3);
+}
+
+// 경과 시간이 예상 시간의 몇 %인지에 따라 상태 메시지를 결정한다.
+function getStatusMessage(elapsed: number, estimateSec: number): string {
+  const ratio = estimateSec > 0 ? elapsed / estimateSec : 0;
+  if (ratio < 0.25) return '입력 내용을 분석하고 있어요';
+  if (ratio < 0.75) return '핵심 단어를 골라내고 있어요';
+  if (ratio < 1.0) return '뜻과 품사를 정리하고 있어요';
+  return '거의 다 됐어요, 조금만 기다려주세요';
 }
 
 export default function WordSetExtractingScreen({ navigation, route }: Props) {
@@ -36,24 +36,17 @@ export default function WordSetExtractingScreen({ navigation, route }: Props) {
   const params = route.params;
   const [elapsed, setElapsed] = useState(0);
   const [error, setError] = useState('');
-  const [messageIndex, setMessageIndex] = useState(0);
   const abortedRef = useRef(false);
 
   const source = params.type === 'text' ? 'manual' : 'photo';
   const photoCount = params.type === 'photo' ? params.photos.length : 0;
-  const estimate = estimateTime(params.type, params.wordCount, photoCount);
+  const estimateSec = estimateSeconds(params.type, params.wordCount, photoCount);
+  const estimateStr = `약 ${estimateSec}~${Math.round(estimateSec * 1.5)}초`;
+  const statusMessage = getStatusMessage(elapsed, estimateSec);
 
   // 경과 시간 카운터
   useEffect(() => {
     const timer = setInterval(() => setElapsed((e) => e + 1), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  // 상태 메시지 순환 (5초마다)
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setMessageIndex((i) => Math.min(i + 1, STATUS_MESSAGES.length - 1));
-    }, 5000);
     return () => clearInterval(timer);
   }, []);
 
@@ -119,9 +112,9 @@ export default function WordSetExtractingScreen({ navigation, route }: Props) {
         ) : (
           <>
             <ActivityIndicator size="large" color={colors.accent} />
-            <Text style={styles.statusMessage}>{STATUS_MESSAGES[messageIndex]}</Text>
+            <Text style={styles.statusMessage}>{statusMessage}</Text>
             <Text style={styles.elapsed}>{elapsedStr} 경과</Text>
-            <Text style={styles.estimate}>예상 소요 시간: {estimate}</Text>
+            <Text style={styles.estimate}>예상 소요 시간: {estimateStr}</Text>
           </>
         )}
       </View>
