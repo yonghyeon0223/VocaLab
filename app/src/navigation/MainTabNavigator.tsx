@@ -11,6 +11,7 @@ import WordSetInputMethodScreen from '../screens/WordSetInputMethodScreen';
 import WordSetTextInputScreen from '../screens/WordSetTextInputScreen';
 import WordSetPhotoInputScreen from '../screens/WordSetPhotoInputScreen';
 import WordSetWordCountScreen from '../screens/WordSetWordCountScreen';
+import WordSetExtractingScreen from '../screens/WordSetExtractingScreen';
 import WordSelectionScreen from '../screens/WordSelectionScreen';
 import WordSetNameScreen from '../screens/WordSetNameScreen';
 import ProfileLevelTestScreen from '../screens/ProfileLevelTestScreen';
@@ -22,6 +23,7 @@ export type MainStackParamList = {
   WordSetTextInput: undefined;
   WordSetPhotoInput: undefined;
   WordSetWordCount: { type: 'text'; text: string } | { type: 'photo'; photos: string[] };
+  WordSetExtracting: ({ type: 'text'; text: string } | { type: 'photo'; photos: string[] }) & { wordCount: number };
   WordSelection: { words: Word[]; source: 'manual' | 'photo' };
   WordSetName: { source: 'manual' | 'photo'; words: Word[] };
   RetestLevel: undefined;
@@ -85,6 +87,7 @@ export default function MainTabNavigator() {
       <Stack.Screen name="WordSetTextInput" component={WordSetTextInputScreen} />
       <Stack.Screen name="WordSetPhotoInput" component={WordSetPhotoInputScreen} />
       <Stack.Screen name="WordSetWordCount" component={WordSetWordCountScreen} />
+      <Stack.Screen name="WordSetExtracting" component={WordSetExtractingScreen} />
       <Stack.Screen name="WordSelection" component={WordSelectionScreen} />
       <Stack.Screen name="WordSetName" component={WordSetNameScreen} />
       <Stack.Screen name="RetestLevel" component={ProfileLevelTestScreen} />
