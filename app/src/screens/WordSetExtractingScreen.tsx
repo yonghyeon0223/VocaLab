@@ -31,7 +31,7 @@ export default function WordSetExtractingScreen({ navigation, route }: Props) {
   const params = route.params;
   const [stage, setStage] = useState<Stage>('uploading');
   const [spellings, setSpellings] = useState<string[]>([]);
-  const [suggestedTitle, setSuggestedTitle] = useState('');
+  const suggestedTitleRef = useRef('');
   const [error, setError] = useState('');
   const abortedRef = useRef(false);
 
@@ -75,7 +75,7 @@ export default function WordSetExtractingScreen({ navigation, route }: Props) {
         // 추출된 단어 목록 + 추천 제목 저장
         const extracted = extractResult.spellings.slice(0, 100);
         setSpellings(extracted);
-        if (extractResult.title) setSuggestedTitle(extractResult.title);
+        if (extractResult.title) suggestedTitleRef.current = extractResult.title;
         setStage('extracted');
 
         // 잠깐 보여준 후 뜻 추출로 넘어감
@@ -99,7 +99,7 @@ export default function WordSetExtractingScreen({ navigation, route }: Props) {
         }
 
         setStage('done');
-        navigation.replace('WordSelection', { words: meaningsResult.words.slice(0, 100), source, suggestedTitle });
+        navigation.replace('WordSelection', { words: meaningsResult.words.slice(0, 100), source, suggestedTitle: suggestedTitleRef.current });
       } catch {
         if (!mounted || abortedRef.current) return;
         setError('단어 찾기에 실패했어요. 다시 시도해주세요.');

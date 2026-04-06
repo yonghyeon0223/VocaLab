@@ -90,6 +90,7 @@ export async function extractSpellings(
   const result = await callClaude('claude-haiku-4-5-20251001', systemPrompt, userContent);
   const title: string = result.title ?? '';
   const words: string[] = Array.isArray(result.words) ? result.words : [];
+  console.log('[extractSpellings] AI 반환 title:', JSON.stringify(title));
 
   // 중복 제거 + 소문자 정규화
   const seen = new Set<string>();
