@@ -368,7 +368,44 @@ type Word = {
 
 ---
 
-## 📐 기술 참고 (Sprint 04까지 축적)
+### Sprint 05 — AI 단어 추출 파이프라인
+
+#### DB 구조 변경
+
+- `words` 컬렉션 삭제 → `wordSets` 문서에 `words: Word[]` 내장(embed)
+- `Word` = `{ spelling, meanings: WordMeaning[] }` (단어당 최대 3개 뜻)
+- `WordMeaning` = `{ definition(영영), meaning(한국어), partOfSpeech }`
+- `WordSet`에 `source: 'manual' | 'photo'` 추가, 최대 100개 단어
+
+#### AI 파이프라인 (2단계)
+
+```
+호출 #1 (Haiku): N개 단어 spelling 추출 + 세트 제목 추천
+호출 #2 (Haiku): 원본 텍스트 + spelling → 뜻 생성 (50개 이상 병렬 배치)
+```
+
+- Haiku 4.5 output 한도 8192 tokens → 단어+뜻 동시 추출 시 초과 가능 → 2단계 분리
+- 사진도 Haiku Vision 사용 (Sonnet 대비 3~5배 빠름)
+- 사진 압축: quality 0.5 + exif 제거
+
+#### 핵심 UX 규칙
+
+- 유저가 단어 수 직접 입력 (1~100)
+- AI가 100개 초과 반환 시 클라이언트에서 100개로 자름
+- 로딩 화면: 실제 단계 표시 (서버 전송 → 단어 추출 → 추출된 단어 칩 표시 → 뜻 분석)
+- AI 추천 제목을 세트 이름에 프리필
+- 삭제 시 확인 다이얼로그
+
+#### 구현된 엔드포인트
+
+| 메서드 | 경로 | 인증 | 설명 |
+|--------|------|------|------|
+| POST | `/api/word-sets/extract-spellings` | Bearer | AI 단어 추출 (spelling + 제목) |
+| POST | `/api/word-sets/generate-meanings` | Bearer | AI 뜻 생성 (원본 텍스트 + spelling) |
+
+---
+
+## 📐 기술 참고 (Sprint 05까지 축적)
 
 > **이 섹션은 참고용이며, 반드시 따라야 하는 규칙이 아닙니다.**
 > 이전 스프린트에서 내린 기술적 결정의 맥락을 보존하기 위해 기록합니다.
