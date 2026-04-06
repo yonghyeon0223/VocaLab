@@ -22,19 +22,20 @@ function estimateSeconds(type: 'text' | 'photo', wordCount: number, photoCount: 
   return Math.round((5 + wordCount * 0.3) * 1.2);
 }
 
-// 경과 시간이 예상 시간의 몇 %인지에 따라 상태 메시지를 결정한다.
-function getStatusMessage(elapsed: number, estimateSec: number): string {
-  const ratio = estimateSec > 0 ? elapsed / estimateSec : 0;
-  if (ratio < 0.25) return '입력 내용을 분석하고 있어요';
-  if (ratio < 0.75) return '핵심 단어를 골라내고 있어요';
-  if (ratio < 1.0) return '뜻과 품사를 정리하고 있어요';
-  return '거의 다 됐어요, 조금만 기다려주세요';
-}
+type Stage = 'preparing' | 'uploading' | 'analyzing' | 'done';
+
+const STAGE_MESSAGES: Record<Stage, string> = {
+  preparing: '사진을 준비하고 있어요',
+  uploading: '서버에 전송하고 있어요',
+  analyzing: 'AI가 핵심 단어를 분석하고 있어요',
+  done: '거의 다 됐어요',
+};
 
 export default function WordSetExtractingScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
   const params = route.params;
   const [elapsed, setElapsed] = useState(0);
+  const [stage, setStage] = useState<Stage>(params.type === 'photo' ? 'preparing' : 'uploading');
   const [error, setError] = useState('');
   const abortedRef = useRef(false);
 
@@ -42,7 +43,7 @@ export default function WordSetExtractingScreen({ navigation, route }: Props) {
   const photoCount = params.type === 'photo' ? params.photos.length : 0;
   const estimateSec = estimateSeconds(params.type, params.wordCount, photoCount);
   const estimateStr = `약 ${estimateSec}~${Math.round(estimateSec * 1.5)}초`;
-  const statusMessage = getStatusMessage(elapsed, estimateSec);
+  const statusMessage = STAGE_MESSAGES[stage];
 
   // 경과 시간 카운터
   useEffect(() => {
@@ -61,6 +62,7 @@ export default function WordSetExtractingScreen({ navigation, route }: Props) {
         if (params.type === 'text') {
           input = { type: 'text', text: params.text, wordCount: params.wordCount };
         } else {
+          // 사진 → base64 변환 (preparing 단계)
           const images: string[] = [];
           for (const uri of params.photos) {
             const base64 = await readAsStringAsync(uri, { encoding: 'base64' });
@@ -69,7 +71,13 @@ export default function WordSetExtractingScreen({ navigation, route }: Props) {
           input = { type: 'photo', images, wordCount: params.wordCount };
         }
 
+        // 서버 전송 + AI 분석 시작
+        setStage('uploading');
+        // 약간의 딜레이 후 analyzing으로 전환 (업로드는 빠르게 끝남)
+        setTimeout(() => setStage('analyzing'), 2000);
+
         const result = await extractWords(input);
+        setStage('done');
 
         if (!mounted || abortedRef.current) return;
 
