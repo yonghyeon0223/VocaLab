@@ -34,10 +34,9 @@ export default function WordSetInputMethodScreen({ navigation }: Props) {
           <Ionicons name="document-text-outline" size={28} color={colors.accent} />
           <View style={styles.cardContent}>
             <Text style={styles.cardTitle}>영어 지문 입력</Text>
-            <Text style={styles.cardDesc}>
-              교과서 지문, 단어 리스트 등을 붙여넣으면{'\n'}
-              AI가 내 수준에 맞는 핵심 단어를 찾아줘요
-            </Text>
+            <Text style={styles.cardDesc}>· 교과서 지문</Text>
+            <Text style={styles.cardDesc}>· 단어 리스트</Text>
+            <Text style={styles.cardDesc}>· 팝송 가사, 에세이 등</Text>
           </View>
         </TouchableOpacity>
 
@@ -49,28 +48,9 @@ export default function WordSetInputMethodScreen({ navigation }: Props) {
           <Ionicons name="camera-outline" size={28} color={colors.accent} />
           <View style={styles.cardContent}>
             <Text style={styles.cardTitle}>사진 촬영</Text>
-            <Text style={styles.cardDesc}>
-              영어 교재, 단어장, 프린트를 촬영하면{'\n'}
-              AI가 사진 속 핵심 단어를 찾아줘요
-            </Text>
-          </View>
-        </TouchableOpacity>
-      </View>
-
-      {/* 수동 입력 */}
-      <View style={styles.section}>
-        <TouchableOpacity
-          style={styles.cardLight}
-          onPress={() => navigation.navigate('WordSetManualEntry')}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="create-outline" size={28} color={colors.text.secondary} />
-          <View style={styles.cardContent}>
-            <Text style={styles.cardTitleLight}>단어 직접 입력</Text>
-            <Text style={styles.cardDesc}>
-              단어, 뜻, 품사를 하나씩 직접 입력해요{'\n'}
-              이미 외울 단어가 정해져 있을 때 좋아요
-            </Text>
+            <Text style={styles.cardDesc}>· 영어 교재</Text>
+            <Text style={styles.cardDesc}>· 단어장, 시험지</Text>
+            <Text style={styles.cardDesc}>· 프린트, 워크시트 등</Text>
           </View>
         </TouchableOpacity>
       </View>
@@ -116,14 +96,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.accent + '33',
   },
-  cardLight: {
-    flexDirection: 'row',
-    backgroundColor: colors.background.secondary,
-    borderRadius: 16,
-    padding: 20,
-    gap: 14,
-    alignItems: 'flex-start',
-  },
   cardContent: {
     flex: 1,
     gap: 4,
@@ -132,11 +104,6 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '600',
     color: colors.text.primary,
-  },
-  cardTitleLight: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: colors.text.secondary,
   },
   cardDesc: {
     fontSize: 14,
