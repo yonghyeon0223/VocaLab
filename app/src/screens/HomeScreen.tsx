@@ -42,6 +42,13 @@ export default function HomeScreen() {
       {/* 인사 */}
       <Text style={styles.greeting}>{nickname}님, 안녕하세요</Text>
 
+      {/* 학습 현황 placeholder */}
+      <View style={styles.placeholderCard}>
+        <Ionicons name="bar-chart-outline" size={24} color={colors.text.disabled} />
+        <Text style={styles.placeholderTitle}>학습 현황</Text>
+        <Text style={styles.placeholderText}>학습 기능이 추가되면 여기에 진행률이 표시돼요</Text>
+      </View>
+
       {/* 3개 메뉴 */}
       <View style={styles.menuCards}>
         {/* 새 단어 세트 만들기 */}
@@ -102,13 +109,6 @@ export default function HomeScreen() {
           </View>
           <Ionicons name="chevron-forward" size={20} color={colors.text.disabled} />
         </TouchableOpacity>
-      </View>
-
-      {/* 학습 현황 placeholder */}
-      <View style={styles.placeholderCard}>
-        <Ionicons name="bar-chart-outline" size={24} color={colors.text.disabled} />
-        <Text style={styles.placeholderTitle}>학습 현황</Text>
-        <Text style={styles.placeholderText}>학습 기능이 추가되면 여기에 진행률이 표시돼요</Text>
       </View>
 
       {/* 복습 캘린더 placeholder */}
