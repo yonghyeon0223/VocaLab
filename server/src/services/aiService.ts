@@ -20,7 +20,7 @@ async function callClaude(model: string, systemPrompt: string, userContent: unkn
     },
     body: JSON.stringify({
       model,
-      max_tokens: 8192,
+      max_tokens: 16384,
       system: systemPrompt,
       messages: [{ role: 'user', content: userContent }],
     }),
