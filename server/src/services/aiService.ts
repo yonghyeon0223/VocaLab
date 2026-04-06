@@ -126,7 +126,7 @@ Priority order for selecting meanings:
 - Maximum 3 meanings per word
 - Each meaning must be a separate object (never combine with comma)
 - definition: English explanation
-- meaning: Korean translation — refer to and summarize the English definition. Keep it concise and natural for students.
+- meaning: Korean translation — the primary goal is to make it easy to memorize. Keep it short, intuitive, and natural. Refer to the English definition for accuracy but prioritize memorability over precision.
 - partOfSpeech: noun, verb, adj, adv, phrase, prep, conj, pron, det, interj, idiom, other
 
 Words: {WORDS}
