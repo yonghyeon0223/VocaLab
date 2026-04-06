@@ -59,15 +59,13 @@ export default function WordSelectionScreen({ navigation, route }: Props) {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
-        <Text style={styles.title}>학습할 단어를 선택하세요</Text>
-        <Text style={styles.subtitle}>
-          {words.length}개의 단어가 추출되었어요
-        </Text>
-        {selectedCount > 0 && selectedCount <= 30 && (
-          <Text style={styles.hint}>20~30개가 학습에 적합해요</Text>
-        )}
-
+      {/* 상단 고정: 제목 + 선택 카운터 */}
+      <View style={styles.header}>
+        <Text style={styles.title}>이미 아는 단어는 탭해서 해제하세요</Text>
+        <View style={styles.counterRow}>
+          <Text style={styles.counterLabel}>선택된 단어</Text>
+          <Text style={styles.counterValue}>{selectedCount}<Text style={styles.counterTotal}> / {words.length}</Text></Text>
+        </View>
         <View style={styles.bulkRow}>
           <TouchableOpacity onPress={selectAll} activeOpacity={0.7}>
             <Text style={styles.bulkText}>전체 선택</Text>
@@ -76,6 +74,9 @@ export default function WordSelectionScreen({ navigation, route }: Props) {
             <Text style={styles.bulkText}>전체 해제</Text>
           </TouchableOpacity>
         </View>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
 
         {words.map((w, idx) => {
           const isSelected = selectedWords.has(w.spelling);
@@ -116,14 +117,8 @@ export default function WordSelectionScreen({ navigation, route }: Props) {
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-        <Text style={styles.selectedCount}>
-          선택된 단어: <Text style={styles.selectedCountNum}>{selectedCount}개</Text>
-        </Text>
-        {selectedCount > MAX_WORDS && (
-          <Text style={styles.errorSmall}>최대 {MAX_WORDS}개까지 선택 가능해요</Text>
-        )}
         <Button
-          label="다음"
+          label={`${selectedCount}개 단어로 세트 만들기`}
           onPress={handleNext}
           disabled={selectedCount < 1 || selectedCount > MAX_WORDS}
         />
@@ -137,24 +132,37 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background.primary,
   },
-  body: {
+  header: {
     paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 16,
+    paddingTop: 16,
+    paddingBottom: 12,
     gap: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.default,
   },
   title: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: '600',
     color: colors.text.primary,
   },
-  subtitle: {
-    fontSize: 15,
+  counterRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+  },
+  counterLabel: {
+    fontSize: 14,
     color: colors.text.secondary,
   },
-  hint: {
-    fontSize: 14,
-    color: colors.text.disabled,
+  counterValue: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: colors.accent,
+  },
+  counterTotal: {
+    fontSize: 16,
+    fontWeight: '400',
+    color: colors.text.secondary,
   },
   bulkRow: {
     flexDirection: 'row',
@@ -164,6 +172,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     color: colors.accent,
+  },
+  body: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 16,
+    gap: 10,
   },
   wordCard: {
     flexDirection: 'row',
@@ -236,18 +250,5 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: colors.border.default,
-    gap: 6,
-  },
-  selectedCount: {
-    fontSize: 14,
-    color: colors.text.secondary,
-  },
-  selectedCountNum: {
-    fontWeight: '700',
-    color: colors.accent,
-  },
-  errorSmall: {
-    fontSize: 14,
-    color: colors.error,
   },
 });
