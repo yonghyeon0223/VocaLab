@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import * as wordSetService from '../services/wordSetService';
-import { createWordSetSchema, extractSpellingsSchema, generateMeaningsSchema } from '../validators/wordSetValidator';
+import { createWordSetSchema, extractSpellingsSchema, generateMeaningsSchema, updateWordSetSchema } from '../validators/wordSetValidator';
 import { AppError } from '../utils/AppError';
 
 // 호출 #1: 단어 추출 (spelling만)
@@ -43,6 +43,20 @@ export async function createWordSet(req: Request, res: Response, next: NextFunct
     );
 
     res.status(201).json({ success: true, data: { wordSet } });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// 세트 이름 수정
+export async function updateWordSet(req: Request, res: Response, next: NextFunction) {
+  try {
+    if (!req.userId) return next(new AppError('UNAUTHORIZED', 401, '인증이 필요합니다'));
+
+    const data = updateWordSetSchema.parse(req.body);
+    const wordSet = await wordSetService.updateWordSetName(req.userId, req.params.id, data.name);
+
+    res.json({ success: true, data: { wordSet } });
   } catch (err) {
     next(err);
   }

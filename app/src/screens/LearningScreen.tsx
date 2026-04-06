@@ -8,15 +8,20 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { ToastAndroid } from 'react-native';
+import { MainStackParamList } from '../navigation/MainTabNavigator';
+import DotMenu from '../components/ui/DotMenu';
 import { colors } from '../constants/colors';
 import { useWordSetStore } from '../stores/wordSetStore';
 import { fetchWordSets, deleteWordSet } from '../services/wordSetService';
 import { WordSet } from '../../../shared/types';
 
 export default function LearningScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
   const insets = useSafeAreaInsets();
   const wordSets = useWordSetStore((s) => s.wordSets);
   const loaded = useWordSetStore((s) => s.loaded);
@@ -58,17 +63,24 @@ export default function LearningScreen() {
   }
 
   function renderItem({ item }: { item: WordSet }) {
+    const wordCount = (item as WordSet & { wordCount?: number }).wordCount ?? item.words?.length ?? 0;
     return (
-      <TouchableOpacity style={styles.setCard} activeOpacity={0.7}>
+      <TouchableOpacity
+        style={styles.setCard}
+        activeOpacity={0.7}
+        onPress={() => navigation.navigate('WordSetDetail', { setId: item._id })}
+      >
         <View style={styles.setCardContent}>
           <Text style={styles.setName}>{item.name}</Text>
           <Text style={styles.setMeta}>
-            {(item as WordSet & { wordCount?: number }).wordCount ?? item.words?.length ?? 0}개 단어 · {formatDate(item.createdAt)}
+            {wordCount}개 단어 · {formatDate(item.createdAt)}
           </Text>
         </View>
-        <TouchableOpacity onPress={() => confirmDelete(item)} hitSlop={8}>
-          <Ionicons name="trash-outline" size={18} color={colors.text.secondary} />
-        </TouchableOpacity>
+        <DotMenu items={[
+          { label: '이름 수정', onPress: () => navigation.navigate('WordSetRename', { setId: item._id, currentName: item.name }) },
+          { label: '삭제', onPress: () => confirmDelete(item), destructive: true },
+          { label: '공유', onPress: () => ToastAndroid.show('공유 기능은 준비 중이에요', ToastAndroid.SHORT) },
+        ]} />
       </TouchableOpacity>
     );
   }

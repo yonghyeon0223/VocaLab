@@ -34,6 +34,13 @@ export async function createWordSet(name: string, source: 'manual' | 'photo', wo
   return wordSet;
 }
 
+export async function updateWordSetName(setId: string, name: string) {
+  const res = await api.patch(`/api/word-sets/${setId}`, { name });
+  const wordSet = res.data.data.wordSet as WordSet;
+  useWordSetStore.getState().updateWordSet(setId, { name: wordSet.name });
+  return wordSet;
+}
+
 export async function deleteWordSet(setId: string) {
   await api.delete(`/api/word-sets/${setId}`);
   useWordSetStore.getState().removeWordSet(setId);

@@ -9,6 +9,7 @@ type WordSetState = {
 
   setWordSets: (wordSets: WordSet[]) => void;
   addWordSet: (wordSet: WordSet) => void;
+  updateWordSet: (setId: string, data: Partial<WordSet>) => void;
   removeWordSet: (setId: string) => void;
   reset: () => void;
 };
@@ -22,6 +23,11 @@ export const useWordSetStore = create<WordSetState>((set) => ({
   // 새 세트를 목록 맨 앞에 추가한다 (최신순).
   addWordSet: (wordSet) =>
     set((state) => ({ wordSets: [wordSet, ...state.wordSets] })),
+
+  updateWordSet: (setId, data) =>
+    set((state) => ({
+      wordSets: state.wordSets.map((ws) => ws._id === setId ? { ...ws, ...data } : ws),
+    })),
 
   removeWordSet: (setId) =>
     set((state) => ({

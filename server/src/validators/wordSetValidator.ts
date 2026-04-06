@@ -40,6 +40,13 @@ export const createWordSetSchema = z.object({
   words: z.array(wordSchema).min(1).max(100),
 });
 
+export const updateWordSetSchema = z.object({
+  name: z.string().transform((s) => s.trim()).pipe(
+    z.string().min(1, '세트 이름을 입력해주세요').max(30, '세트 이름은 30자 이하로 입력해주세요'),
+  ),
+});
+
+export type UpdateWordSetInput = z.infer<typeof updateWordSetSchema>;
 export type ExtractSpellingsInput = z.infer<typeof extractSpellingsSchema>;
 export type GenerateMeaningsInput = z.infer<typeof generateMeaningsSchema>;
 export type CreateWordSetInput = z.infer<typeof createWordSetSchema>;

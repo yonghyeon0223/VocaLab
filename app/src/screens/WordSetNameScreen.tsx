@@ -1,39 +1,55 @@
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RouteProp } from '@react-navigation/native';
+import { RouteProp, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import TextInput from '../components/ui/TextInput';
 import Button from '../components/ui/Button';
 import { colors } from '../constants/colors';
-import { createWordSet } from '../services/wordSetService';
+import { createWordSet, updateWordSetName } from '../services/wordSetService';
 import { MainStackParamList } from '../navigation/MainTabNavigator';
 
 type Props = {
-  navigation: NativeStackNavigationProp<MainStackParamList, 'WordSetName'>;
-  route: RouteProp<MainStackParamList, 'WordSetName'>;
+  navigation: NativeStackNavigationProp<MainStackParamList, 'WordSetName' | 'WordSetRename'>;
 };
 
 const MAX_NAME_LENGTH = 30;
 
-export default function WordSetNameScreen({ navigation, route }: Props) {
+export default function WordSetNameScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
-  const { source, words } = route.params;
-  const [name, setName] = useState(route.params.suggestedTitle ?? '');
+  const route = useRoute();
+
+  // 편집 모드 여부를 route name으로 판단
+  const isRenameMode = route.name === 'WordSetRename';
+  const params = route.params as
+    | { source: 'manual' | 'photo'; words: unknown[]; suggestedTitle?: string }
+    | { setId: string; currentName: string };
+
+  const initialName = isRenameMode
+    ? (params as { currentName: string }).currentName
+    : (params as { suggestedTitle?: string }).suggestedTitle ?? '';
+
+  const [name, setName] = useState(initialName);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const trimmed = name.trim();
   const isValid = trimmed.length >= 1 && trimmed.length <= MAX_NAME_LENGTH;
 
-  // 이름 입력 후 바로 서버에 저장하고 홈으로 복귀한다.
   async function handleSave() {
     if (!isValid) return;
     setLoading(true);
     setError('');
     try {
-      await createWordSet(trimmed, source, words);
-      navigation.popToTop();
+      if (isRenameMode) {
+        const { setId } = params as { setId: string };
+        await updateWordSetName(setId, trimmed);
+        navigation.goBack();
+      } else {
+        const { source, words } = params as { source: 'manual' | 'photo'; words: unknown[] };
+        await createWordSet(trimmed, source, words as never);
+        navigation.popToTop();
+      }
     } catch {
       setError('저장에 실패했어요. 다시 시도해주세요.');
     } finally {
@@ -51,8 +67,14 @@ export default function WordSetNameScreen({ navigation, route }: Props) {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.titleBlock}>
-          <Text style={styles.title}>단어 세트 이름을{'\n'}지어주세요</Text>
-          <Text style={styles.subtitle}>{words.length}개의 단어가 준비됐어요</Text>
+          <Text style={styles.title}>
+            {isRenameMode ? '세트 이름 수정' : '단어 세트 이름을\n지어주세요'}
+          </Text>
+          {!isRenameMode && (
+            <Text style={styles.subtitle}>
+              {(params as { words: unknown[] }).words?.length ?? 0}개의 단어가 준비됐어요
+            </Text>
+          )}
         </View>
 
         <TextInput

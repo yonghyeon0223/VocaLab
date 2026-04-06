@@ -49,6 +49,17 @@ export async function getWordSetDetail(userId: string, setId: string) {
   return wordSet;
 }
 
+export async function updateWordSetName(userId: string, setId: string, name: string) {
+  const wordSet = await wordSetRepository.findByIdAndUserId(
+    new ObjectId(setId),
+    new ObjectId(userId),
+  );
+  if (!wordSet) {
+    throw new AppError('WORD_SET_NOT_FOUND', 404, '단어 세트를 찾을 수 없습니다');
+  }
+  return wordSetRepository.updateName(new ObjectId(setId), name);
+}
+
 export async function deleteWordSet(userId: string, setId: string) {
   const wordSet = await wordSetRepository.findByIdAndUserId(
     new ObjectId(setId),

@@ -69,10 +69,8 @@ export default function HomeScreen() {
         <TouchableOpacity
           style={[styles.menuCard, !recentSet && styles.menuCardDisabled]}
           onPress={() => {
-            // 다음 스프린트에서 단어 세트 상세 페이지로 이동
             if (recentSet) {
-              // placeholder — 현재는 학습 탭으로 이동
-              tabNavigation.navigate('Learning');
+              navigation.navigate('WordSetDetail', { setId: recentSet._id });
             }
           }}
           disabled={!recentSet}

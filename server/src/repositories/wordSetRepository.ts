@@ -62,6 +62,14 @@ export async function findByIdAndUserId(setId: ObjectId, userId: ObjectId) {
   return col().findOne({ _id: setId, userId });
 }
 
+export async function updateName(setId: ObjectId, name: string) {
+  return col().findOneAndUpdate(
+    { _id: setId },
+    { $set: { name, updatedAt: new Date() } },
+    { returnDocument: 'after' },
+  );
+}
+
 export async function deleteById(setId: ObjectId) {
   await col().deleteOne({ _id: setId });
 }

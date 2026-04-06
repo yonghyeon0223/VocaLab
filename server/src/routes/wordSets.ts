@@ -9,6 +9,7 @@ router.post('/extract-spellings', authenticate, wordSetController.extractSpellin
 router.post('/generate-meanings', authenticate, wordSetController.generateMeanings);
 
 // CRUD
+router.patch('/:id', authenticate, wordSetController.updateWordSet);
 router.post('/', authenticate, wordSetController.createWordSet);
 router.get('/', authenticate, wordSetController.getWordSets);
 router.get('/:id', authenticate, wordSetController.getWordSetDetail);
