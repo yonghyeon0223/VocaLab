@@ -46,11 +46,15 @@ export async function insertWordSet(data: {
   };
 }
 
-// 목록 조회 시 words 배열 제외
+// 목록 조회 시 words 배열 대신 단어 수만 반환한다.
 export async function findByUserId(userId: ObjectId) {
   return col()
-    .find({ userId }, { projection: { words: 0 } })
-    .sort({ createdAt: -1 })
+    .aggregate([
+      { $match: { userId } },
+      { $sort: { createdAt: -1 } },
+      { $addFields: { wordCount: { $size: { $ifNull: ['$words', []] } } } },
+      { $project: { words: 0 } },
+    ])
     .toArray();
 }
 

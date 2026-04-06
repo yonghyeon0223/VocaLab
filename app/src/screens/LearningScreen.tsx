@@ -38,7 +38,7 @@ export default function LearningScreen() {
   function confirmDelete(item: WordSet) {
     Alert.alert(
       '단어 세트 삭제',
-      `"${item.name}" (${item.words?.length ?? 0}개 단어)을 삭제할까요?\n삭제하면 되돌릴 수 없어요.`,
+      `"${item.name}" (${(item as WordSet & { wordCount?: number }).wordCount ?? item.words?.length ?? 0}개 단어)을 삭제할까요?\n삭제하면 되돌릴 수 없어요.`,
       [
         { text: '취소', style: 'cancel' },
         {
@@ -63,11 +63,11 @@ export default function LearningScreen() {
         <View style={styles.setCardContent}>
           <Text style={styles.setName}>{item.name}</Text>
           <Text style={styles.setMeta}>
-            {item.words?.length ?? 0}개 단어 · {formatDate(item.createdAt)}
+            {(item as WordSet & { wordCount?: number }).wordCount ?? item.words?.length ?? 0}개 단어 · {formatDate(item.createdAt)}
           </Text>
         </View>
         <TouchableOpacity onPress={() => confirmDelete(item)} hitSlop={8}>
-          <Ionicons name="trash-outline" size={18} color={colors.error} />
+          <Ionicons name="trash-outline" size={18} color={colors.text.secondary} />
         </TouchableOpacity>
       </TouchableOpacity>
     );
