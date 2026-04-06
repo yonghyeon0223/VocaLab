@@ -185,11 +185,6 @@ export default function WordSetExtractingScreen({ navigation, route }: Props) {
         )}
       </ScrollView>
 
-      {stage !== 'error' && stage !== 'done' && (
-        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-          <Button label="취소" onPress={handleGoBack} />
-        </View>
-      )}
     </View>
   );
 }
@@ -256,9 +251,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.error,
     textAlign: 'center',
-  },
-  footer: {
-    paddingHorizontal: 24,
-    paddingTop: 16,
   },
 });
