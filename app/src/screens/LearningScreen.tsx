@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   StyleSheet,
   Text,
@@ -34,8 +35,21 @@ export default function LearningScreen() {
     try { await fetchWordSets(); } catch {} finally { setRefreshing(false); }
   }
 
-  async function handleDelete(setId: string) {
-    try { await deleteWordSet(setId); } catch {}
+  function confirmDelete(item: WordSet) {
+    Alert.alert(
+      '단어 세트 삭제',
+      `"${item.name}" (${item.words?.length ?? 0}개 단어)을 삭제할까요?\n삭제하면 되돌릴 수 없어요.`,
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '삭제',
+          style: 'destructive',
+          onPress: async () => {
+            try { await deleteWordSet(item._id); } catch {}
+          },
+        },
+      ],
+    );
   }
 
   function formatDate(date: Date | string) {
@@ -52,8 +66,8 @@ export default function LearningScreen() {
             {item.words?.length ?? 0}개 단어 · {formatDate(item.createdAt)}
           </Text>
         </View>
-        <TouchableOpacity onPress={() => handleDelete(item._id)} hitSlop={8}>
-          <Ionicons name="trash-outline" size={18} color={colors.text.secondary} />
+        <TouchableOpacity onPress={() => confirmDelete(item)} hitSlop={8}>
+          <Ionicons name="trash-outline" size={18} color={colors.error} />
         </TouchableOpacity>
       </TouchableOpacity>
     );
