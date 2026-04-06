@@ -4,8 +4,9 @@ import { authenticate } from '../middlewares/authenticate';
 
 const router = Router();
 
-// AI 단어 추출 (단일 호출로 단어 + 뜻 + 품사)
-router.post('/extract', authenticate, wordSetController.extractWords);
+// AI 파이프라인
+router.post('/extract-spellings', authenticate, wordSetController.extractSpellings);
+router.post('/generate-meanings', authenticate, wordSetController.generateMeanings);
 
 // CRUD
 router.post('/', authenticate, wordSetController.createWordSet);

@@ -60,8 +60,8 @@ export async function deleteWordSet(userId: string, setId: string) {
   await wordSetRepository.deleteById(new ObjectId(setId));
 }
 
-// AI 단일 호출로 N개 핵심 단어 + 뜻 + 품사 추출
-export async function extractWords(
+// 호출 #1: 단어 추출 (spelling만)
+export async function extractSpellings(
   userId: string,
   input: { type: 'text'; text: string } | { type: 'photo'; images: string[] },
   wordCount: number,
@@ -70,7 +70,16 @@ export async function extractWords(
   if (!user) throw new AppError('USER_NOT_FOUND', 404, '유저를 찾을 수 없습니다');
 
   const activeLevel = (user.activeLevel as number) ?? 5;
-  const purposes = (user.purposes as string[]) ?? [];
 
-  return aiService.extractWords(input, activeLevel, wordCount, purposes);
+  const spellings = await aiService.extractSpellings(input, activeLevel, wordCount);
+  return { spellings };
+}
+
+// 호출 #2: 뜻 생성 (원본 텍스트 + spelling 목록)
+export async function generateMeanings(
+  originalText: string,
+  spellings: string[],
+) {
+  const words = await aiService.generateMeanings(originalText, spellings);
+  return { words };
 }

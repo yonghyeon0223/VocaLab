@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { readAsStringAsync } from 'expo-file-system/legacy';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../constants/colors';
-import { extractWords } from '../services/wordSetService';
+import { extractSpellings, generateMeanings } from '../services/wordSetService';
 import { MainStackParamList } from '../navigation/MainTabNavigator';
 import Button from '../components/ui/Button';
 
@@ -14,55 +15,41 @@ type Props = {
   route: RouteProp<MainStackParamList, 'WordSetExtracting'>;
 };
 
-// 예상 소요 시간(초)을 계산한다.
-function estimateSeconds(type: 'text' | 'photo', wordCount: number, photoCount: number): number {
-  if (type === 'photo') {
-    return Math.round((photoCount * 8 + wordCount * 0.3) * 1.2);
-  }
-  return Math.round((5 + wordCount * 0.3) * 1.2);
-}
+type Stage = 'uploading' | 'extracting' | 'extracted' | 'meanings' | 'done' | 'error';
 
-type Stage = 'preparing' | 'uploading' | 'analyzing' | 'done';
-
-const STAGE_MESSAGES: Record<Stage, string> = {
-  preparing: '사진을 준비하고 있어요',
+const STAGE_LABELS: Record<Stage, string> = {
   uploading: '서버에 전송하고 있어요',
-  analyzing: 'AI가 핵심 단어를 분석하고 있어요',
-  done: '거의 다 됐어요',
+  extracting: '핵심 단어를 추출하고 있어요',
+  extracted: '단어 추출 완료',
+  meanings: '뜻을 분석하고 있어요',
+  done: '완료',
+  error: '오류 발생',
 };
 
 export default function WordSetExtractingScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
   const params = route.params;
-  const [elapsed, setElapsed] = useState(0);
-  const [stage, setStage] = useState<Stage>(params.type === 'photo' ? 'preparing' : 'uploading');
+  const [stage, setStage] = useState<Stage>('uploading');
+  const [spellings, setSpellings] = useState<string[]>([]);
   const [error, setError] = useState('');
   const abortedRef = useRef(false);
 
   const source = params.type === 'text' ? 'manual' : 'photo';
-  const photoCount = params.type === 'photo' ? params.photos.length : 0;
-  const estimateSec = estimateSeconds(params.type, params.wordCount, photoCount);
-  const estimateStr = `약 ${estimateSec}~${Math.round(estimateSec * 1.5)}초`;
-  const statusMessage = STAGE_MESSAGES[stage];
+  // 사진 입력 시 원본 텍스트가 없으므로 AI가 추출한 단어만으로 뜻 생성
+  const originalText = params.type === 'text' ? params.text : '';
 
-  // 경과 시간 카운터
-  useEffect(() => {
-    const timer = setInterval(() => setElapsed((e) => e + 1), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  // 화면 진입 시 즉시 추출 시작
   useEffect(() => {
     let mounted = true;
 
     async function run() {
       try {
-        let input: { type: 'text'; text: string; wordCount: number } | { type: 'photo'; images: string[]; wordCount: number };
+        // 1단계: 서버 전송 + 단어 추출
+        setStage('uploading');
 
+        let input: { type: 'text'; text: string; wordCount: number } | { type: 'photo'; images: string[]; wordCount: number };
         if (params.type === 'text') {
           input = { type: 'text', text: params.text, wordCount: params.wordCount };
         } else {
-          // 사진 → base64 변환 (preparing 단계)
           const images: string[] = [];
           for (const uri of params.photos) {
             const base64 = await readAsStringAsync(uri, { encoding: 'base64' });
@@ -71,25 +58,50 @@ export default function WordSetExtractingScreen({ navigation, route }: Props) {
           input = { type: 'photo', images, wordCount: params.wordCount };
         }
 
-        // 서버 전송 + AI 분석 시작
-        setStage('uploading');
-        // 약간의 딜레이 후 analyzing으로 전환 (업로드는 빠르게 끝남)
-        setTimeout(() => setStage('analyzing'), 2000);
+        if (!mounted || abortedRef.current) return;
+        setStage('extracting');
 
-        const result = await extractWords(input);
-        setStage('done');
+        const extractResult = await extractSpellings(input);
 
         if (!mounted || abortedRef.current) return;
 
-        if (result.words.length < 1) {
+        if (extractResult.spellings.length < 1) {
           setError('추출할 수 있는 단어가 없어요. 다른 내용으로 시도해보세요.');
+          setStage('error');
           return;
         }
 
-        navigation.replace('WordSelection', { words: result.words, source });
+        // 추출된 단어 목록 표시
+        const extracted = extractResult.spellings.slice(0, 100);
+        setSpellings(extracted);
+        setStage('extracted');
+
+        // 잠깐 보여준 후 뜻 추출로 넘어감
+        await new Promise((r) => setTimeout(r, 1500));
+        if (!mounted || abortedRef.current) return;
+
+        // 2단계: 뜻 생성
+        setStage('meanings');
+
+        const meaningsResult = await generateMeanings(
+          originalText || extracted.join(', '),
+          extracted,
+        );
+
+        if (!mounted || abortedRef.current) return;
+
+        if (meaningsResult.words.length < 1) {
+          setError('뜻 추출에 실패했어요. 다시 시도해주세요.');
+          setStage('error');
+          return;
+        }
+
+        setStage('done');
+        navigation.replace('WordSelection', { words: meaningsResult.words.slice(0, 100), source });
       } catch {
         if (!mounted || abortedRef.current) return;
         setError('단어 찾기에 실패했어요. 다시 시도해주세요.');
+        setStage('error');
       }
     }
 
@@ -102,32 +114,76 @@ export default function WordSetExtractingScreen({ navigation, route }: Props) {
     navigation.goBack();
   }
 
-  const minutes = Math.floor(elapsed / 60);
-  const seconds = elapsed % 60;
-  const elapsedStr = minutes > 0
-    ? `${minutes}분 ${String(seconds).padStart(2, '0')}초`
-    : `${seconds}초`;
+  // 단계별 아이콘
+  function stageIcon(target: Stage, current: Stage) {
+    const order: Stage[] = ['uploading', 'extracting', 'extracted', 'meanings', 'done'];
+    const targetIdx = order.indexOf(target);
+    const currentIdx = order.indexOf(current);
+
+    if (current === 'error') {
+      return <Ionicons name="alert-circle" size={20} color={colors.error} />;
+    }
+    if (currentIdx > targetIdx) {
+      return <Ionicons name="checkmark-circle" size={20} color="#4caf7d" />;
+    }
+    if (currentIdx === targetIdx) {
+      return <ActivityIndicator size="small" color={colors.accent} />;
+    }
+    return <Ionicons name="ellipse-outline" size={20} color={colors.text.disabled} />;
+  }
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.content}>
-        {error ? (
-          <>
-            <Text style={styles.errorIcon}>⚠️</Text>
+    <View style={[styles.container, { paddingTop: insets.top + 40 }]}>
+      <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
+        {/* 단계 표시 */}
+        <View style={styles.steps}>
+          <View style={styles.stepRow}>
+            {stageIcon('uploading', stage)}
+            <Text style={[styles.stepText, (stage === 'uploading') && styles.stepTextActive]}>
+              서버 전송
+            </Text>
+          </View>
+          <View style={styles.stepRow}>
+            {stageIcon('extracting', stage)}
+            <Text style={[styles.stepText, (stage === 'extracting') && styles.stepTextActive]}>
+              단어 추출
+            </Text>
+          </View>
+          <View style={styles.stepRow}>
+            {stageIcon('meanings', stage)}
+            <Text style={[styles.stepText, (stage === 'meanings') && styles.stepTextActive]}>
+              뜻 분석
+            </Text>
+          </View>
+        </View>
+
+        {/* 현재 상태 메시지 */}
+        <Text style={styles.statusMessage}>{STAGE_LABELS[stage]}</Text>
+
+        {/* 추출된 단어 목록 (extracted 이후 표시) */}
+        {spellings.length > 0 && (
+          <View style={styles.wordList}>
+            <Text style={styles.wordListTitle}>{spellings.length}개 단어 추출됨</Text>
+            <View style={styles.wordChips}>
+              {spellings.map((w, i) => (
+                <View key={`${w}-${i}`} style={styles.wordChip}>
+                  <Text style={styles.wordChipText}>{w}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* 에러 */}
+        {stage === 'error' && (
+          <View style={styles.errorSection}>
             <Text style={styles.errorText}>{error}</Text>
             <Button label="돌아가기" onPress={handleGoBack} />
-          </>
-        ) : (
-          <>
-            <ActivityIndicator size="large" color={colors.accent} />
-            <Text style={styles.statusMessage}>{statusMessage}</Text>
-            <Text style={styles.elapsed}>{elapsedStr} 경과</Text>
-            <Text style={styles.estimate}>예상 소요 시간: {estimateStr}</Text>
-          </>
+          </View>
         )}
-      </View>
+      </ScrollView>
 
-      {!error && (
+      {stage !== 'error' && stage !== 'done' && (
         <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
           <Button label="취소" onPress={handleGoBack} />
         </View>
@@ -141,37 +197,63 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background.primary,
   },
-  content: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 32,
+  body: {
+    paddingHorizontal: 24,
+    gap: 24,
+  },
+  steps: {
     gap: 16,
+  },
+  stepRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  stepText: {
+    fontSize: 16,
+    color: colors.text.disabled,
+    fontWeight: '500',
+  },
+  stepTextActive: {
+    color: colors.text.primary,
+    fontWeight: '600',
   },
   statusMessage: {
     fontSize: 18,
     fontWeight: '600',
-    color: colors.text.primary,
-    textAlign: 'center',
-    marginTop: 8,
-  },
-  elapsed: {
-    fontSize: 24,
-    fontWeight: '700',
     color: colors.accent,
   },
-  estimate: {
-    fontSize: 14,
+  wordList: {
+    gap: 10,
+  },
+  wordListTitle: {
+    fontSize: 15,
+    fontWeight: '600',
     color: colors.text.secondary,
   },
-  errorIcon: {
-    fontSize: 40,
+  wordChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  wordChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    backgroundColor: colors.background.secondary,
+  },
+  wordChipText: {
+    fontSize: 14,
+    color: colors.text.primary,
+  },
+  errorSection: {
+    alignItems: 'center',
+    gap: 16,
   },
   errorText: {
     fontSize: 16,
     color: colors.error,
     textAlign: 'center',
-    lineHeight: 24,
   },
   footer: {
     paddingHorizontal: 24,

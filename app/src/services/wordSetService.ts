@@ -2,13 +2,19 @@ import api from './api';
 import { useWordSetStore } from '../stores/wordSetStore';
 import { WordSet, Word } from '../../../shared/types';
 
-// --- AI + Dictionary ---
+// --- AI 파이프라인 ---
 
-// AI 단일 호출로 N개 핵심 단어 + 뜻 + 품사 추출. timeout 120초.
-export async function extractWords(
+// 호출 #1: 단어 추출 (spelling만)
+export async function extractSpellings(
   input: { type: 'text'; text: string; wordCount: number } | { type: 'photo'; images: string[]; wordCount: number },
 ) {
-  const res = await api.post('/api/word-sets/extract', input, { timeout: 120000 });
+  const res = await api.post('/api/word-sets/extract-spellings', input, { timeout: 120000 });
+  return res.data.data as { spellings: string[] };
+}
+
+// 호출 #2: 뜻 생성 (원본 텍스트 + spelling 목록)
+export async function generateMeanings(originalText: string, spellings: string[]) {
+  const res = await api.post('/api/word-sets/generate-meanings', { originalText, spellings }, { timeout: 120000 });
   return res.data.data as { words: Word[] };
 }
 
