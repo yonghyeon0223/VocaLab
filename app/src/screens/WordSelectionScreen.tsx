@@ -81,7 +81,7 @@ export default function WordSelectionScreen({ navigation, route }: Props) {
           const isSelected = selectedWords.has(w.spelling);
           return (
             <TouchableOpacity
-              key={w.spelling}
+              key={`${w.spelling}-${idx}`}
               style={[styles.wordCard, isSelected ? styles.wordCardSelected : styles.wordCardDeselected]}
               onPress={() => toggleWord(w.spelling)}
               activeOpacity={0.7}

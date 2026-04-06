@@ -117,7 +117,20 @@ export async function extractWords(
   }
 
   const result = await callClaude(model, systemPrompt, userContent);
-  const words: ExtractedWord[] = Array.isArray(result.words) ? result.words : [];
+  const raw: ExtractedWord[] = Array.isArray(result.words) ? result.words : [];
 
-  return { words };
+  // AI가 같은 spelling을 여러 번 반환할 수 있으므로 meanings를 병합한다.
+  const merged = new Map<string, ExtractedWord>();
+  for (const w of raw) {
+    const key = w.spelling?.toLowerCase();
+    if (!key) continue;
+    const existing = merged.get(key);
+    if (existing) {
+      existing.meanings.push(...(w.meanings ?? []));
+    } else {
+      merged.set(key, { spelling: key, meanings: w.meanings ?? [] });
+    }
+  }
+
+  return { words: Array.from(merged.values()) };
 }
