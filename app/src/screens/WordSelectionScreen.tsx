@@ -61,7 +61,7 @@ export default function WordSelectionScreen({ navigation, route }: Props) {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* 상단 고정: 제목 + 선택 카운터 */}
       <View style={styles.header}>
-        <Text style={styles.title}>이미 아는 단어는 탭해서 해제하세요</Text>
+        <Text style={styles.title}>이미 아는 단어는 선택 해제하세요</Text>
         <View style={styles.counterRow}>
           <Text style={styles.counterLabel}>선택된 단어</Text>
           <Text style={styles.counterValue}>{selectedCount}<Text style={styles.counterTotal}> / {words.length}</Text></Text>

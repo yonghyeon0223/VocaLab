@@ -17,9 +17,9 @@ type Props = {
 // 예상 소요 시간(초)을 계산한다.
 function estimateSeconds(type: 'text' | 'photo', wordCount: number, photoCount: number): number {
   if (type === 'photo') {
-    return Math.round(photoCount * 8 + wordCount * 0.3);
+    return Math.round((photoCount * 8 + wordCount * 0.3) * 1.2);
   }
-  return Math.round(5 + wordCount * 0.3);
+  return Math.round((5 + wordCount * 0.3) * 1.2);
 }
 
 // 경과 시간이 예상 시간의 몇 %인지에 따라 상태 메시지를 결정한다.
