@@ -43,9 +43,10 @@ export default function WordSetPhotoInputScreen({ navigation }: Props) {
 
     const remaining = MAX_PHOTOS - photos.length;
     const result = fromCamera
-      ? await ImagePicker.launchCameraAsync({ quality: 0.8 })
+      ? await ImagePicker.launchCameraAsync({ quality: 0.5, exif: false })
       : await ImagePicker.launchImageLibraryAsync({
-          quality: 0.8,
+          quality: 0.5,
+          exif: false,
           allowsMultipleSelection: true,
           selectionLimit: remaining,
         });
