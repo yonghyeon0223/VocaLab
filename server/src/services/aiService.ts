@@ -108,7 +108,7 @@ export async function extractWords(
     model = 'claude-haiku-4-5-20251001';
     userContent = [{ type: 'text', text: input.text }];
   } else {
-    model = 'claude-sonnet-4-20250514';
+    model = 'claude-haiku-4-5-20251001';
     userContent = input.images.map((img) => ({
       type: 'image',
       source: { type: 'base64', media_type: 'image/jpeg', data: img },
