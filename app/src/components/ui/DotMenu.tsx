@@ -11,9 +11,10 @@ type MenuItem = {
 
 type Props = {
   items: MenuItem[];
+  title?: string;
 };
 
-export default function DotMenu({ items }: Props) {
+export default function DotMenu({ items, title }: Props) {
   const [visible, setVisible] = useState(false);
 
   return (
@@ -25,7 +26,7 @@ export default function DotMenu({ items }: Props) {
       <Modal
         visible={visible}
         transparent
-        animationType="fade"
+        animationType="slide"
         onRequestClose={() => setVisible(false)}
       >
         <TouchableOpacity
@@ -33,7 +34,8 @@ export default function DotMenu({ items }: Props) {
           activeOpacity={1}
           onPress={() => setVisible(false)}
         >
-          <View style={styles.menu}>
+          <View style={styles.sheet}>
+            {title && <Text style={styles.sheetTitle}>{title}</Text>}
             {items.map((item, i) => (
               <TouchableOpacity
                 key={i}
@@ -49,6 +51,13 @@ export default function DotMenu({ items }: Props) {
                 </Text>
               </TouchableOpacity>
             ))}
+            <TouchableOpacity
+              style={styles.cancelItem}
+              onPress={() => setVisible(false)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.cancelText}>닫기</Text>
+            </TouchableOpacity>
           </View>
         </TouchableOpacity>
       </Modal>
@@ -60,26 +69,50 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'flex-end',
   },
-  menu: {
+  sheet: {
     backgroundColor: colors.background.secondary,
-    borderRadius: 14,
-    padding: 8,
-    width: 220,
-    gap: 2,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingTop: 16,
+    paddingBottom: 32,
+    paddingHorizontal: 16,
+    gap: 4,
+  },
+  sheetTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text.primary,
+    textAlign: 'center',
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.default,
+    marginBottom: 4,
   },
   menuItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
     borderRadius: 10,
   },
   menuText: {
     fontSize: 16,
     color: colors.text.primary,
+    textAlign: 'center',
   },
   menuTextDestructive: {
     color: colors.error,
+  },
+  cancelItem: {
+    paddingVertical: 14,
+    marginTop: 4,
+    borderRadius: 10,
+    backgroundColor: colors.background.tertiary,
+  },
+  cancelText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors.text.secondary,
+    textAlign: 'center',
   },
 });

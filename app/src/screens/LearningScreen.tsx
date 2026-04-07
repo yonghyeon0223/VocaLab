@@ -76,7 +76,7 @@ export default function LearningScreen() {
             {wordCount}개 단어 · {formatDate(item.createdAt)}
           </Text>
         </View>
-        <DotMenu items={[
+        <DotMenu title={item.name} items={[
           { label: '이름 수정', onPress: () => navigation.navigate('WordSetRename', { setId: item._id, currentName: item.name }) },
           { label: '삭제', onPress: () => confirmDelete(item), destructive: true },
           { label: '공유', onPress: () => ToastAndroid.show('공유 기능은 준비 중이에요', ToastAndroid.SHORT) },

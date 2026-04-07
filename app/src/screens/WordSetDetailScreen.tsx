@@ -122,7 +122,7 @@ export default function WordSetDetailScreen({ navigation, route }: Props) {
           <Ionicons name="chevron-back" size={24} color={colors.text.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>{data.name}</Text>
-        <DotMenu items={[
+        <DotMenu title={data.name} items={[
           { label: '이름 수정', onPress: handleRename },
           { label: '삭제', onPress: handleDelete, destructive: true },
           { label: '공유', onPress: handleShare },
@@ -246,9 +246,7 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 14,
   },
-  stageCardLocked: {
-    opacity: 0.4,
-  },
+  stageCardLocked: {},
   stageIcon: {
     width: 44,
     height: 44,
@@ -260,7 +258,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent + '1a',
   },
   stageIconLocked: {
-    backgroundColor: colors.background.tertiary,
+    backgroundColor: colors.background.secondary,
   },
   stageContent: {
     flex: 1,
@@ -272,14 +270,14 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   stageLabelLocked: {
-    color: colors.text.secondary,
+    color: colors.text.primary,
   },
   stageDesc: {
     fontSize: 14,
     color: colors.text.secondary,
   },
   stageDescLocked: {
-    color: colors.text.disabled,
+    color: colors.text.secondary,
   },
   stageProgress: {
     fontSize: 14,
