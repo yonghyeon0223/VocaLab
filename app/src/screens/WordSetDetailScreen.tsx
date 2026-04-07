@@ -142,7 +142,31 @@ export default function WordSetDetailScreen({ navigation, route }: Props) {
           <Text style={styles.progressText}>0%</Text>
         </View>
 
-        {/* 8단계 카드 */}
+        {/* 액티비티 */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>액티비티</Text>
+        </View>
+
+        <TouchableOpacity
+          style={styles.activityCard}
+          onPress={() => navigation.navigate('WordIntro', { setId, words: data.words })}
+          activeOpacity={0.7}
+        >
+          <View style={styles.activityIcon}>
+            <Ionicons name="albums-outline" size={22} color={colors.accent} />
+          </View>
+          <View style={styles.stageContent}>
+            <Text style={styles.stageLabel}>플래시카드</Text>
+            <Text style={styles.stageDesc}>단어와 뜻을 카드로 넘기며 복습해요</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={colors.text.disabled} />
+        </TouchableOpacity>
+
+        {/* 8단계 학습 로드맵 */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>학습 로드맵</Text>
+        </View>
+
         {LEARNING_STAGES.map((stage, i) => {
           const isUnlocked = i === 0;
           return (
@@ -150,11 +174,9 @@ export default function WordSetDetailScreen({ navigation, route }: Props) {
               key={stage.key}
               style={[styles.stageCard, !isUnlocked && styles.stageCardLocked]}
               onPress={() => {
-                if (isUnlocked) {
-                  navigation.navigate('WordIntro', { setId, words: data.words });
-                }
+                // 1단계 포함 전부 placeholder — 다음 스프린트에서 구현
               }}
-              activeOpacity={isUnlocked ? 0.7 : 1}
+              activeOpacity={1}
             >
               <View style={[styles.stageIcon, isUnlocked ? styles.stageIconActive : styles.stageIconLocked]}>
                 {isUnlocked ? (
@@ -212,7 +234,32 @@ const styles = StyleSheet.create({
   },
   body: {
     paddingHorizontal: 20,
-    gap: 12,
+    gap: 10,
+  },
+  sectionHeader: {
+    marginTop: 8,
+    marginBottom: 2,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text.secondary,
+  },
+  activityCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.background.secondary,
+    borderRadius: 14,
+    padding: 16,
+    gap: 14,
+  },
+  activityIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: colors.accent + '1a',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   progressSection: {
     gap: 8,
